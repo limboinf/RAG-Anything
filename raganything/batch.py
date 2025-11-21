@@ -1,7 +1,7 @@
 """
-Batch processing functionality for RAGAnything
+RAGAnything 的批处理功能
 
-Contains methods for processing multiple documents in batch mode
+包含用于批量处理多个文档的方法
 """
 
 import asyncio
@@ -17,18 +17,18 @@ if TYPE_CHECKING:
 
 
 class BatchMixin:
-    """BatchMixin class containing batch processing functionality for RAGAnything"""
+    """包含 RAGAnything 批处理功能的 BatchMixin 类"""
 
-    # Type hints for mixin attributes (will be available when mixed into RAGAnything)
+    # Mixin 属性的类型提示（混入 RAGAnything 时可用）
     config: "RAGAnythingConfig"
     logger: logging.Logger
 
-    # Type hints for methods that will be available from other mixins
+    # 来自其他 mixins 的可用方法的类型提示
     async def _ensure_lightrag_initialized(self) -> None: ...
     async def process_document_complete(self, file_path: str, **kwargs) -> None: ...
 
     # ==========================================
-    # ORIGINAL BATCH PROCESSING METHOD (RESTORED)
+    # 原始批处理方法（已恢复）
     # ==========================================
 
     async def process_folder_complete(
@@ -44,18 +44,18 @@ class BatchMixin:
         max_workers: int = None,
     ):
         """
-        Process all supported files in a folder
+        处理文件夹中所有支持的文件
 
-        Args:
-            folder_path: Path to the folder containing files to process
-            output_dir: Directory for parsed outputs (optional)
-            parse_method: Parsing method to use (optional)
-            display_stats: Whether to display statistics (optional)
-            split_by_character: Character to split by (optional)
-            split_by_character_only: Whether to split only by character (optional)
-            file_extensions: List of file extensions to process (optional)
-            recursive: Whether to process folders recursively (optional)
-            max_workers: Maximum number of workers for concurrent processing (optional)
+        参数:
+            folder_path: 包含待处理文件的文件夹路径
+            output_dir: 解析输出目录（可选）
+            parse_method: 要使用的解析方法（可选）
+            display_stats: 是否显示统计信息（可选）
+            split_by_character: 用于分割的字符（可选）
+            split_by_character_only: 是否仅按字符分割（可选）
+            file_extensions: 要处理的文件扩展名列表（可选）
+            recursive: 是否递归处理文件夹（可选）
+            max_workers: 并发处理的最大工作线程数（可选）
         """
         if output_dir is None:
             output_dir = self.config.parser_output_dir
@@ -72,12 +72,12 @@ class BatchMixin:
 
         await self._ensure_lightrag_initialized()
 
-        # Get all files in the folder
+        # 获取文件夹中的所有文件
         folder_path_obj = Path(folder_path)
         if not folder_path_obj.exists():
             raise FileNotFoundError(f"Folder not found: {folder_path}")
 
-        # Collect files based on supported extensions
+        # 根据支持的扩展名收集文件
         files_to_process = []
         for file_ext in file_extensions:
             if recursive:
@@ -94,11 +94,11 @@ class BatchMixin:
             f"Found {len(files_to_process)} files to process in {folder_path}"
         )
 
-        # Create output directory if it doesn't exist
+        # 如果输出目录不存在则创建
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Process files with controlled concurrency
+        # 以受控的并发方式处理文件
         semaphore = asyncio.Semaphore(max_workers)
         tasks = []
 
@@ -117,15 +117,15 @@ class BatchMixin:
                     self.logger.error(f"Failed to process {file_path}: {str(e)}")
                     return False, str(file_path), str(e)
 
-        # Create tasks for all files
+        # 为所有文件创建任务
         for file_path in files_to_process:
             task = asyncio.create_task(process_single_file(file_path))
             tasks.append(task)
 
-        # Wait for all tasks to complete
+        # 等待所有任务完成
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Process results
+        # 处理结果
         successful_files = []
         failed_files = []
         for result in results:
@@ -138,7 +138,7 @@ class BatchMixin:
                 else:
                     failed_files.append((file_path, error))
 
-        # Display statistics if requested
+        # 如果需要，显示统计信息
         if display_stats:
             self.logger.info("Processing complete!")
             self.logger.info(f"  Successful: {len(successful_files)} files")
@@ -149,7 +149,7 @@ class BatchMixin:
                     self.logger.warning(f"  - {file_path}: {error}")
 
     # ==========================================
-    # NEW ENHANCED BATCH PROCESSING METHODS
+    # 新的增强批处理方法
     # ==========================================
 
     def process_documents_batch(
@@ -163,21 +163,21 @@ class BatchMixin:
         **kwargs,
     ) -> BatchProcessingResult:
         """
-        Process multiple documents in batch using the new BatchParser
+        使用新的 BatchParser 批量处理多个文档
 
-        Args:
-            file_paths: List of file paths or directories to process
-            output_dir: Output directory for parsed files
-            parse_method: Parsing method to use
-            max_workers: Maximum number of workers for parallel processing
-            recursive: Whether to process directories recursively
-            show_progress: Whether to show progress bar
-            **kwargs: Additional arguments passed to the parser
+        参数:
+            file_paths: 要处理的文件路径或目录列表
+            output_dir: 解析文件的输出目录
+            parse_method: 要使用的解析方法
+            max_workers: 并行处理的最大工作线程数
+            recursive: 是否递归处理目录
+            show_progress: 是否显示进度条
+            **kwargs: 传递给解析器的额外参数
 
-        Returns:
-            BatchProcessingResult: Results of the batch processing
+        返回:
+            BatchProcessingResult: 批处理结果
         """
-        # Use config defaults if not specified
+        # 如果未指定，使用配置默认值
         if output_dir is None:
             output_dir = self.config.parser_output_dir
         if parse_method is None:
@@ -187,15 +187,15 @@ class BatchMixin:
         if recursive is None:
             recursive = self.config.recursive_folder_processing
 
-        # Create batch parser
+        # 创建批处理解析器
         batch_parser = BatchParser(
             parser_type=self.config.parser,
             max_workers=max_workers,
             show_progress=show_progress,
-            skip_installation_check=True,  # Skip installation check for better UX
+            skip_installation_check=True,  # 跳过安装检查以获得更好的用户体验
         )
 
-        # Process batch
+        # 处理批次
         return batch_parser.process_batch(
             file_paths=file_paths,
             output_dir=output_dir,
@@ -215,21 +215,21 @@ class BatchMixin:
         **kwargs,
     ) -> BatchProcessingResult:
         """
-        Asynchronously process multiple documents in batch
+        异步批量处理多个文档
 
-        Args:
-            file_paths: List of file paths or directories to process
-            output_dir: Output directory for parsed files
-            parse_method: Parsing method to use
-            max_workers: Maximum number of workers for parallel processing
-            recursive: Whether to process directories recursively
-            show_progress: Whether to show progress bar
-            **kwargs: Additional arguments passed to the parser
+        参数:
+            file_paths: 要处理的文件路径或目录列表
+            output_dir: 解析文件的输出目录
+            parse_method: 要使用的解析方法
+            max_workers: 并行处理的最大工作线程数
+            recursive: 是否递归处理目录
+            show_progress: 是否显示进度条
+            **kwargs: 传递给解析器的额外参数
 
-        Returns:
-            BatchProcessingResult: Results of the batch processing
+        返回:
+            BatchProcessingResult: 批处理结果
         """
-        # Use config defaults if not specified
+        # 如果未指定，使用配置默认值
         if output_dir is None:
             output_dir = self.config.parser_output_dir
         if parse_method is None:
@@ -239,15 +239,15 @@ class BatchMixin:
         if recursive is None:
             recursive = self.config.recursive_folder_processing
 
-        # Create batch parser
+        # 创建批处理解析器
         batch_parser = BatchParser(
             parser_type=self.config.parser,
             max_workers=max_workers,
             show_progress=show_progress,
-            skip_installation_check=True,  # Skip installation check for better UX
+            skip_installation_check=True,  # 跳过安装检查以获得更好的用户体验
         )
 
-        # Process batch asynchronously
+        # 异步处理批次
         return await batch_parser.process_batch_async(
             file_paths=file_paths,
             output_dir=output_dir,
@@ -257,7 +257,7 @@ class BatchMixin:
         )
 
     def get_supported_file_extensions(self) -> List[str]:
-        """Get list of supported file extensions for batch processing"""
+        """获取批处理支持的文件扩展名列表"""
         batch_parser = BatchParser(parser_type=self.config.parser)
         return batch_parser.get_supported_extensions()
 
@@ -265,14 +265,14 @@ class BatchMixin:
         self, file_paths: List[str], recursive: Optional[bool] = None
     ) -> List[str]:
         """
-        Filter file paths to only include supported file types
+        过滤文件路径，只包含支持的文件类型
 
-        Args:
-            file_paths: List of file paths to filter
-            recursive: Whether to process directories recursively
+        参数:
+            file_paths: 要过滤的文件路径列表
+            recursive: 是否递归处理目录
 
-        Returns:
-            List of supported file paths
+        返回:
+            支持的文件路径列表
         """
         if recursive is None:
             recursive = self.config.recursive_folder_processing
@@ -291,27 +291,27 @@ class BatchMixin:
         **kwargs,
     ) -> Dict[str, Any]:
         """
-        Process documents in batch and then add them to RAG
+        批量处理文档，然后将它们添加到 RAG
 
-        This method combines document parsing and RAG insertion:
-        1. First, parse all documents using batch processing
-        2. Then, process each successfully parsed document with RAG
+        此方法结合了文档解析和 RAG 插入:
+        1. 首先，使用批处理解析所有文档
+        2. 然后，使用 RAG 处理每个成功解析的文档
 
-        Args:
-            file_paths: List of file paths or directories to process
-            output_dir: Output directory for parsed files
-            parse_method: Parsing method to use
-            max_workers: Maximum number of workers for parallel processing
-            recursive: Whether to process directories recursively
-            show_progress: Whether to show progress bar
-            **kwargs: Additional arguments passed to the parser
+        参数:
+            file_paths: 要处理的文件路径或目录列表
+            output_dir: 解析文件的输出目录
+            parse_method: 要使用的解析方法
+            max_workers: 并行处理的最大工作线程数
+            recursive: 是否递归处理目录
+            show_progress: 是否显示进度条
+            **kwargs: 传递给解析器的额外参数
 
-        Returns:
-            Dict containing both parse results and RAG processing results
+        返回:
+            包含解析结果和 RAG 处理结果的字典
         """
         start_time = time.time()
 
-        # Use config defaults if not specified
+        # 如果未指定，使用配置默认值
         if output_dir is None:
             output_dir = self.config.parser_output_dir
         if parse_method is None:
@@ -323,7 +323,7 @@ class BatchMixin:
 
         self.logger.info("Starting batch processing with RAG integration")
 
-        # Step 1: Parse documents in batch
+        # 步骤 1: 批量解析文档
         parse_result = self.process_documents_batch(
             file_paths=file_paths,
             output_dir=output_dir,
@@ -334,11 +334,11 @@ class BatchMixin:
             **kwargs,
         )
 
-        # Step 2: Process with RAG
-        # Initialize RAG system
+        # 步骤 2: 使用 RAG 处理
+        # 初始化 RAG 系统
         await self._ensure_lightrag_initialized()
 
-        # Then, process each successful file with RAG
+        # 然后，使用 RAG 处理每个成功的文件
         rag_results = {}
 
         if parse_result.successful_files:
@@ -346,10 +346,10 @@ class BatchMixin:
                 f"Processing {len(parse_result.successful_files)} files with RAG"
             )
 
-            # Process files with RAG (this could be parallelized in the future)
+            # 使用 RAG 处理文件（未来可以并行化）
             for file_path in parse_result.successful_files:
                 try:
-                    # Process the successfully parsed file with RAG
+                    # 使用 RAG 处理成功解析的文件
                     await self.process_document_complete(
                         file_path,
                         output_dir=output_dir,
@@ -357,8 +357,8 @@ class BatchMixin:
                         **kwargs,
                     )
 
-                    # Get some statistics about the processed content
-                    # This would require additional tracking in the RAG system
+                    # 获取有关已处理内容的一些统计信息
+                    # 这需要在 RAG 系统中进行额外的跟踪
                     rag_results[file_path] = {"status": "success", "processed": True}
 
                 except Exception as e:

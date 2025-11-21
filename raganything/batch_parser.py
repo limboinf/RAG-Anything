@@ -1,8 +1,8 @@
 """
-Batch and Parallel Document Parsing
+批量和并行文档解析
 
-This module provides functionality for processing multiple documents in parallel,
-with progress reporting and error handling.
+此模块提供并行处理多个文档的功能，
+包括进度报告和错误处理。
 """
 
 import asyncio
@@ -20,7 +20,7 @@ from .parser import MineruParser, DoclingParser
 
 @dataclass
 class BatchProcessingResult:
-    """Result of batch processing operation"""
+    """批处理操作的结果"""
 
     successful_files: List[str]
     failed_files: List[str]
@@ -31,13 +31,13 @@ class BatchProcessingResult:
 
     @property
     def success_rate(self) -> float:
-        """Calculate success rate as percentage"""
+        """计算成功率（百分比）"""
         if self.total_files == 0:
             return 0.0
         return (len(self.successful_files) / self.total_files) * 100
 
     def summary(self) -> str:
-        """Generate a summary of the batch processing results"""
+        """生成批处理结果的摘要"""
         return (
             f"Batch Processing Summary:\n"
             f"  Total files: {self.total_files}\n"
@@ -50,10 +50,10 @@ class BatchProcessingResult:
 
 class BatchParser:
     """
-    Batch document parser with parallel processing capabilities
+    具有并行处理能力的批量文档解析器
 
-    Supports processing multiple documents concurrently with progress tracking
-    and comprehensive error handling.
+    支持并发处理多个文档，具有进度跟踪
+    和全面的错误处理功能。
     """
 
     def __init__(
@@ -65,14 +65,14 @@ class BatchParser:
         skip_installation_check: bool = False,
     ):
         """
-        Initialize batch parser
+        初始化批处理解析器
 
-        Args:
-            parser_type: Type of parser to use ("mineru" or "docling")
-            max_workers: Maximum number of parallel workers
-            show_progress: Whether to show progress bars
-            timeout_per_file: Timeout in seconds for each file
-            skip_installation_check: Skip parser installation check (useful for testing)
+        参数:
+            parser_type: 要使用的解析器类型（"mineru" 或 "docling"）
+            max_workers: 最大并行工作线程数
+            show_progress: 是否显示进度条
+            timeout_per_file: 每个文件的超时时间（秒）
+            skip_installation_check: 跳过解析器安装检查（对测试有用）
         """
         self.parser_type = parser_type
         self.max_workers = max_workers
@@ -80,7 +80,7 @@ class BatchParser:
         self.timeout_per_file = timeout_per_file
         self.logger = logging.getLogger(__name__)
 
-        # Initialize parser
+        # 初始化解析器
         if parser_type == "mineru":
             self.parser = MineruParser()
         elif parser_type == "docling":
@@ -88,7 +88,7 @@ class BatchParser:
         else:
             raise ValueError(f"Unsupported parser type: {parser_type}")
 
-        # Check parser installation (optional)
+        # 检查解析器安装（可选）
         if not skip_installation_check:
             if not self.parser.check_installation():
                 self.logger.warning(
@@ -96,10 +96,10 @@ class BatchParser:
                     f"This may be due to package conflicts. "
                     f"Use skip_installation_check=True to bypass this check."
                 )
-                # Don't raise an error, just warn - the parser might still work
+                # 不抛出错误，只是警告 - 解析器可能仍然可以工作
 
     def get_supported_extensions(self) -> List[str]:
-        """Get list of supported file extensions"""
+        """获取支持的文件扩展名列表"""
         return list(
             self.parser.OFFICE_FORMATS
             | self.parser.IMAGE_FORMATS
@@ -111,14 +111,14 @@ class BatchParser:
         self, file_paths: List[str], recursive: bool = True
     ) -> List[str]:
         """
-        Filter file paths to only include supported file types
+        过滤文件路径，只包含支持的文件类型
 
-        Args:
-            file_paths: List of file paths or directories
-            recursive: Whether to search directories recursively
+        参数:
+            file_paths: 文件路径或目录列表
+            recursive: 是否递归搜索目录
 
-        Returns:
-            List of supported file paths
+        返回:
+            支持的文件路径列表
         """
         supported_extensions = set(self.get_supported_extensions())
         supported_files = []
@@ -134,7 +134,7 @@ class BatchParser:
 
             elif path.is_dir():
                 if recursive:
-                    # Recursively find all files
+                    # 递归查找所有文件
                     for file_path in path.rglob("*"):
                         if (
                             file_path.is_file()
@@ -142,7 +142,7 @@ class BatchParser:
                         ):
                             supported_files.append(str(file_path))
                 else:
-                    # Only files in the directory (not subdirectories)
+                    # 仅目录中的文件（不包括子目录）
                     for file_path in path.glob("*"):
                         if (
                             file_path.is_file()
@@ -159,26 +159,26 @@ class BatchParser:
         self, file_path: str, output_dir: str, parse_method: str = "auto", **kwargs
     ) -> Tuple[bool, str, Optional[str]]:
         """
-        Process a single file
+        处理单个文件
 
-        Args:
-            file_path: Path to the file to process
-            output_dir: Output directory
-            parse_method: Parsing method
-            **kwargs: Additional parser arguments
+        参数:
+            file_path: 要处理的文件路径
+            output_dir: 输出目录
+            parse_method: 解析方法
+            **kwargs: 额外的解析器参数
 
-        Returns:
-            Tuple of (success, file_path, error_message)
+        返回:
+            元组 (success, file_path, error_message)
         """
         try:
             start_time = time.time()
 
-            # Create file-specific output directory
+            # 创建文件特定的输出目录
             file_name = Path(file_path).stem
             file_output_dir = Path(output_dir) / file_name
             file_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Parse the document
+            # 解析文档
             content_list = self.parser.parse_document(
                 file_path=file_path,
                 output_dir=str(file_output_dir),
@@ -209,21 +209,21 @@ class BatchParser:
         **kwargs,
     ) -> BatchProcessingResult:
         """
-        Process multiple files in parallel
+        并行处理多个文件
 
-        Args:
-            file_paths: List of file paths or directories to process
-            output_dir: Base output directory
-            parse_method: Parsing method for all files
-            recursive: Whether to search directories recursively
-            **kwargs: Additional parser arguments
+        参数:
+            file_paths: 要处理的文件路径或目录列表
+            output_dir: 基础输出目录
+            parse_method: 所有文件的解析方法
+            recursive: 是否递归搜索目录
+            **kwargs: 额外的解析器参数
 
-        Returns:
-            BatchProcessingResult with processing statistics
+        返回:
+            包含处理统计信息的 BatchProcessingResult
         """
         start_time = time.time()
 
-        # Filter to supported files
+        # 过滤到支持的文件
         supported_files = self.filter_supported_files(file_paths, recursive)
 
         if not supported_files:
@@ -239,16 +239,16 @@ class BatchParser:
 
         self.logger.info(f"Found {len(supported_files)} files to process")
 
-        # Create output directory
+        # 创建输出目录
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Process files in parallel
+        # 并行处理文件
         successful_files = []
         failed_files = []
         errors = {}
 
-        # Create progress bar if requested
+        # 如果需要，创建进度条
         pbar = None
         if self.show_progress:
             pbar = tqdm(
@@ -259,7 +259,7 @@ class BatchParser:
 
         try:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                # Submit all tasks
+                # 提交所有任务
                 future_to_file = {
                     executor.submit(
                         self.process_single_file,
@@ -271,7 +271,7 @@ class BatchParser:
                     for file_path in supported_files
                 }
 
-                # Process completed tasks
+                # 处理已完成的任务
                 for future in as_completed(
                     future_to_file, timeout=self.timeout_per_file
                 ):
@@ -288,7 +288,7 @@ class BatchParser:
 
         except Exception as e:
             self.logger.error(f"Batch processing failed: {str(e)}")
-            # Mark remaining files as failed
+            # 将剩余文件标记为失败
             for future in future_to_file:
                 if not future.done():
                     file_path = future_to_file[future]
@@ -303,7 +303,7 @@ class BatchParser:
 
         processing_time = time.time() - start_time
 
-        # Create result
+        # 创建结果
         result = BatchProcessingResult(
             successful_files=successful_files,
             failed_files=failed_files,
@@ -313,7 +313,7 @@ class BatchParser:
             output_dir=output_dir,
         )
 
-        # Log summary
+        # 记录摘要
         self.logger.info(result.summary())
 
         return result
@@ -327,19 +327,19 @@ class BatchParser:
         **kwargs,
     ) -> BatchProcessingResult:
         """
-        Async version of batch processing
+        批处理的异步版本
 
-        Args:
-            file_paths: List of file paths or directories to process
-            output_dir: Base output directory
-            parse_method: Parsing method for all files
-            recursive: Whether to search directories recursively
-            **kwargs: Additional parser arguments
+        参数:
+            file_paths: 要处理的文件路径或目录列表
+            output_dir: 基础输出目录
+            parse_method: 所有文件的解析方法
+            recursive: 是否递归搜索目录
+            **kwargs: 额外的解析器参数
 
-        Returns:
-            BatchProcessingResult with processing statistics
+        返回:
+            包含处理统计信息的 BatchProcessingResult
         """
-        # Run the sync version in a thread pool
+        # 在线程池中运行同步版本
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -353,7 +353,7 @@ class BatchParser:
 
 
 def main():
-    """Command-line interface for batch parsing"""
+    """批处理解析的命令行接口"""
     import argparse
 
     parser = argparse.ArgumentParser(description="Batch document parsing")
@@ -389,14 +389,14 @@ def main():
 
     args = parser.parse_args()
 
-    # Configure logging
+    # 配置日志
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     try:
-        # Create batch parser
+        # 创建批处理解析器
         batch_parser = BatchParser(
             parser_type=args.parser,
             max_workers=args.workers,
@@ -404,7 +404,7 @@ def main():
             timeout_per_file=args.timeout,
         )
 
-        # Process files
+        # 处理文件
         result = batch_parser.process_batch(
             file_paths=args.paths,
             output_dir=args.output,
@@ -412,10 +412,10 @@ def main():
             recursive=args.recursive,
         )
 
-        # Print summary
+        # 打印摘要
         print("\n" + result.summary())
 
-        # Exit with error code if any files failed
+        # 如果有文件失败，以错误代码退出
         if result.failed_files:
             return 1
 
