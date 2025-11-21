@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Example script demonstrating direct content list insertion with RAGAnything
+演示使用 RAGAnything 直接插入内容列表的示例脚本
 
-This example shows how to:
-1. Create a simple content list with different content types
-2. Insert content list directly without document parsing using insert_content_list() method
-3. Perform pure text queries using aquery() method
-4. Perform multimodal queries with specific multimodal content using aquery_with_multimodal() method
-5. Handle different types of multimodal content in the inserted knowledge base
+此示例展示如何：
+1. 创建包含不同内容类型的简单内容列表
+2. 使用 insert_content_list() 方法直接插入内容列表而无需文档解析
+3. 使用 aquery() 方法执行纯文本查询
+4. 使用 aquery_with_multimodal() 方法对特定多模态内容执行多模态查询
+5. 处理插入知识库中的不同类型多模态内容
 """
 
 import os
@@ -17,7 +17,7 @@ import logging
 import logging.config
 from pathlib import Path
 
-# Add project root directory to Python path
+# 将项目根目录添加到 Python 路径
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -32,8 +32,8 @@ load_dotenv(dotenv_path=".env", override=False)
 
 
 def configure_logging():
-    """Configure logging for the application"""
-    # Get log directory path from environment variable or use current directory
+    """配置应用程序的日志记录"""
+    # 从环境变量获取日志目录路径或使用当前目录
     log_dir = os.getenv("LOG_DIR", os.getcwd())
     log_file_path = os.path.abspath(
         os.path.join(log_dir, "insert_content_list_example.log")
@@ -42,9 +42,9 @@ def configure_logging():
     print(f"\nInsert Content List example log file: {log_file_path}\n")
     os.makedirs(os.path.dirname(log_dir), exist_ok=True)
 
-    # Get log file max size and backup count from environment variables
-    log_max_bytes = int(os.getenv("LOG_MAX_BYTES", 10485760))  # Default 10MB
-    log_backup_count = int(os.getenv("LOG_BACKUP_COUNT", 5))  # Default 5 backups
+    # 从环境变量获取日志文件最大大小和备份数量
+    log_max_bytes = int(os.getenv("LOG_MAX_BYTES", 10485760))  # 默认 10MB
+    log_backup_count = int(os.getenv("LOG_BACKUP_COUNT", 5))  # 默认 5 个备份
 
     logging.config.dictConfig(
         {
@@ -83,41 +83,41 @@ def configure_logging():
         }
     )
 
-    # Set the logger level to INFO
+    # 将日志记录器级别设置为 INFO
     logger.setLevel(logging.INFO)
-    # Enable verbose debug if needed
+    # 如果需要，启用详细调试
     set_verbose_debug(os.getenv("VERBOSE", "false").lower() == "true")
 
 
 def create_sample_content_list():
     """
-    Create a simple content list for testing insert_content_list functionality
+    创建用于测试 insert_content_list 功能的简单内容列表
 
-    Returns:
-        List[Dict]: Sample content list with various content types
+    返回:
+        List[Dict]: 包含各种内容类型的示例内容列表
 
-    Note:
-        - img_path should be absolute path to the image file
-        - page_idx represents the page number where the content appears (0-based)
+    注意:
+        - img_path 应为图像文件的绝对路径
+        - page_idx 表示内容出现的页码（从 0 开始）
     """
     content_list = [
-        # Introduction text
+        # 引言文本
         {
             "type": "text",
             "text": "Welcome to the RAGAnything System Documentation. This guide covers the advanced multimodal document processing capabilities and features of our comprehensive RAG system.",
-            "page_idx": 0,  # Page number where this content appears
+            "page_idx": 0,  # 此内容出现的页码
         },
-        # System architecture image
+        # 系统架构图
         {
             "type": "image",
-            "img_path": "/absolute/path/to/system_architecture.jpg",  # IMPORTANT: Use absolute path to image file
+            "img_path": "/absolute/path/to/system_architecture.jpg",  # 重要：使用图像文件的绝对路径
             "image_caption": ["Figure 1: RAGAnything System Architecture"],
             "image_footnote": [
                 "The architecture shows the complete pipeline from document parsing to multimodal query processing"
             ],
-            "page_idx": 1,  # Page number where this image appears
+            "page_idx": 1,  # 此图像出现的页码
         },
-        # Performance comparison table
+        # 性能比较表格
         {
             "type": "table",
             "table_body": """| System | Accuracy | Processing Speed | Memory Usage |
@@ -132,22 +132,22 @@ def create_sample_content_list():
             "table_footnote": [
                 "All tests conducted on the same hardware with identical test datasets"
             ],
-            "page_idx": 2,  # Page number where this table appears
+            "page_idx": 2,  # 此表格出现的页码
         },
-        # Mathematical formula
+        # 数学公式
         {
             "type": "equation",
             "latex": "Relevance(d, q) = \\sum_{i=1}^{n} w_i \\cdot sim(t_i^d, t_i^q) \\cdot \\alpha_i",
             "text": "Document relevance scoring formula where w_i are term weights, sim() is similarity function, and α_i are modality importance factors",
-            "page_idx": 3,  # Page number where this equation appears
+            "page_idx": 3,  # 此方程出现的页码
         },
-        # Feature description
+        # 功能描述
         {
             "type": "text",
             "text": "The system supports multiple content modalities including text, images, tables, and mathematical equations. Each modality is processed using specialized processors optimized for that content type.",
-            "page_idx": 4,  # Page number where this content appears
+            "page_idx": 4,  # 此内容出现的页码
         },
-        # Technical specifications table
+        # 技术规格表格
         {
             "type": "table",
             "table_body": """| Feature | Specification |
@@ -161,13 +161,13 @@ def create_sample_content_list():
             "table_footnote": [
                 "Specifications may vary based on hardware configuration"
             ],
-            "page_idx": 5,  # Page number where this table appears
+            "page_idx": 5,  # 此表格出现的页码
         },
-        # Conclusion
+        # 结论
         {
             "type": "text",
             "text": "RAGAnything represents a significant advancement in multimodal document processing, providing comprehensive solutions for complex knowledge extraction and retrieval tasks.",
-            "page_idx": 6,  # Page number where this content appears
+            "page_idx": 6,  # 此内容出现的页码
         },
     ]
 
@@ -180,24 +180,24 @@ async def demo_insert_content_list(
     working_dir: str = None,
 ):
     """
-    Demonstrate content list insertion and querying with RAGAnything
+    演示使用 RAGAnything 插入和查询内容列表
 
-    Args:
-        api_key: OpenAI API key
-        base_url: Optional base URL for API
-        working_dir: Working directory for RAG storage
+    参数:
+        api_key: OpenAI API 密钥
+        base_url: API 的可选基础 URL
+        working_dir: RAG 存储的工作目录
     """
     try:
-        # Create RAGAnything configuration
+        # 创建 RAGAnything 配置
         config = RAGAnythingConfig(
             working_dir=working_dir or "./rag_storage",
             enable_image_processing=True,
             enable_table_processing=True,
             enable_equation_processing=True,
-            display_content_stats=True,  # Show content statistics
+            display_content_stats=True,  # 显示内容统计
         )
 
-        # Define LLM model function
+        # 定义 LLM 模型函数
         def llm_model_func(prompt, system_prompt=None, history_messages=[], **kwargs):
             return openai_complete_if_cache(
                 "gpt-4o-mini",
@@ -209,7 +209,7 @@ async def demo_insert_content_list(
                 **kwargs,
             )
 
-        # Define vision model function for image processing
+        # 定义用于图像处理的视觉模型函数
         def vision_model_func(
             prompt, system_prompt=None, history_messages=[], image_data=None, **kwargs
         ):
@@ -245,7 +245,7 @@ async def demo_insert_content_list(
             else:
                 return llm_model_func(prompt, system_prompt, history_messages, **kwargs)
 
-        # Define embedding function - using environment variables for configuration
+        # 定义嵌入函数 - 使用环境变量进行配置
         embedding_dim = int(os.getenv("EMBEDDING_DIM", "3072"))
         embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
 
@@ -260,7 +260,7 @@ async def demo_insert_content_list(
             ),
         )
 
-        # Initialize RAGAnything
+        # 初始化 RAGAnything
         rag = RAGAnything(
             config=config,
             llm_model_func=llm_model_func,
@@ -268,27 +268,27 @@ async def demo_insert_content_list(
             embedding_func=embedding_func,
         )
 
-        # Create sample content list
+        # 创建示例内容列表
         logger.info("Creating sample content list...")
         content_list = create_sample_content_list()
         logger.info(f"Created content list with {len(content_list)} items")
 
-        # Insert content list directly
+        # 直接插入内容列表
         logger.info("\nInserting content list into RAGAnything...")
         await rag.insert_content_list(
             content_list=content_list,
-            file_path="raganything_documentation.pdf",  # Reference file name for citation
-            split_by_character=None,  # Optional text splitting
-            split_by_character_only=False,  # Optional text splitting mode
-            doc_id="demo-doc-001",  # Custom document ID
-            display_stats=True,  # Show content statistics
+            file_path="raganything_documentation.pdf",  # 用于引用的参考文件名
+            split_by_character=None,  # 可选的文本分割
+            split_by_character_only=False,  # 可选的文本分割模式
+            doc_id="demo-doc-001",  # 自定义文档 ID
+            display_stats=True,  # 显示内容统计
         )
         logger.info("Content list insertion completed!")
 
-        # Example queries - demonstrating different query approaches
+        # 查询示例 - 演示不同的查询方法
         logger.info("\nQuerying inserted content:")
 
-        # 1. Pure text queries using aquery()
+        # 1. 使用 aquery() 的纯文本查询
         text_queries = [
             "What is RAGAnything and what are its main features?",
             "How does RAGAnything compare to traditional RAG systems?",
@@ -300,7 +300,7 @@ async def demo_insert_content_list(
             result = await rag.aquery(query, mode="hybrid")
             logger.info(f"Answer: {result}")
 
-        # 2. Multimodal query with specific multimodal content using aquery_with_multimodal()
+        # 2. 使用 aquery_with_multimodal() 对特定多模态内容进行多模态查询
         logger.info(
             "\n[Multimodal Query]: Analyzing new performance data against existing benchmarks"
         )
@@ -319,7 +319,7 @@ async def demo_insert_content_list(
         )
         logger.info(f"Answer: {multimodal_result}")
 
-        # 3. Another multimodal query with equation content
+        # 3. 包含方程内容的另一个多模态查询
         logger.info("\n[Multimodal Query]: Mathematical formula analysis")
         equation_result = await rag.aquery_with_multimodal(
             "How does this similarity formula relate to the relevance scoring mentioned in the documentation?",
@@ -334,13 +334,13 @@ async def demo_insert_content_list(
         )
         logger.info(f"Answer: {equation_result}")
 
-        # 4. Insert another content list with different document ID
+        # 4. 使用不同的文档 ID 插入另一个内容列表
         logger.info("\nInserting additional content list...")
         additional_content = [
             {
                 "type": "text",
                 "text": "This is additional documentation about advanced features and configuration options.",
-                "page_idx": 0,  # Page number where this content appears
+                "page_idx": 0,  # 此内容出现的页码
             },
             {
                 "type": "table",
@@ -350,17 +350,17 @@ async def demo_insert_content_list(
                                     | Context Window | 4096 tokens | 1024-8192 |
                                     | Batch Size | 32 | 1-128 |""",
                 "table_caption": ["Advanced Configuration Parameters"],
-                "page_idx": 1,  # Page number where this table appears
+                "page_idx": 1,  # 此表格出现的页码
             },
         ]
 
         await rag.insert_content_list(
             content_list=additional_content,
             file_path="advanced_configuration.pdf",
-            doc_id="demo-doc-002",  # Different document ID
+            doc_id="demo-doc-002",  # 不同的文档 ID
         )
 
-        # Query combined knowledge base
+        # 查询组合的知识库
         logger.info("\n[Combined Query]: What configuration options are available?")
         combined_result = await rag.aquery(
             "What configuration options are available and what are their default values?",
@@ -376,7 +376,7 @@ async def demo_insert_content_list(
 
 
 def main():
-    """Main function to run the example"""
+    """运行示例的主函数"""
     parser = argparse.ArgumentParser(description="Insert Content List Example")
     parser.add_argument(
         "--working_dir", "-w", default="./rag_storage", help="Working directory path"
@@ -394,13 +394,13 @@ def main():
 
     args = parser.parse_args()
 
-    # Check if API key is provided
+    # 检查是否提供了 API 密钥
     if not args.api_key:
         logger.error("Error: OpenAI API key is required")
         logger.error("Set api key environment variable or use --api-key option")
         return
 
-    # Run the demo
+    # 运行演示
     asyncio.run(
         demo_insert_content_list(
             args.api_key,
@@ -411,7 +411,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # Configure logging first
+    # 首先配置日志记录
     configure_logging()
 
     print("RAGAnything Insert Content List Example")

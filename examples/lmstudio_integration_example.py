@@ -1,16 +1,15 @@
 """
-LM Studio Integration Example with RAG-Anything
+LM Studio 与 RAG-Anything 集成示例
 
-This example demonstrates how to integrate LM Studio with RAG-Anything for local
-text document processing and querying.
+此示例演示如何将 LM Studio 与 RAG-Anything 集成以进行本地文本文档处理和查询。
 
-Requirements:
-- LM Studio running locally with server enabled
-- OpenAI Python package: pip install openai
-- RAG-Anything installed: pip install raganything
+要求：
+- 本地运行的 LM Studio 并启用服务器
+- OpenAI Python 包：pip install openai
+- 已安装 RAG-Anything：pip install raganything
 
-Environment Setup:
-Create a .env file with:
+环境设置：
+创建包含以下内容的 .env 文件：
 LLM_BINDING=lmstudio
 LLM_MODEL=openai/gpt-oss-20b
 LLM_BINDING_HOST=http://localhost:1234/v1
@@ -28,10 +27,10 @@ from typing import List, Dict, Optional
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
-# Load environment variables
+# 加载环境变量
 load_dotenv()
 
-# RAG-Anything imports
+# RAG-Anything 导入
 from raganything import RAGAnything, RAGAnythingConfig
 from lightrag.utils import EmbeddingFunc
 from lightrag.llm.openai import openai_complete_if_cache
@@ -48,7 +47,7 @@ async def lmstudio_llm_model_func(
     history_messages: List[Dict] = None,
     **kwargs,
 ) -> str:
-    """Top-level LLM function for LightRAG (pickle-safe)."""
+    """LightRAG 的顶层 LLM 函数（可 pickle 序列化）。"""
     return await openai_complete_if_cache(
         model=LM_MODEL_NAME,
         prompt=prompt,
@@ -61,7 +60,7 @@ async def lmstudio_llm_model_func(
 
 
 async def lmstudio_embedding_async(texts: List[str]) -> List[List[float]]:
-    """Top-level embedding function for LightRAG (pickle-safe)."""
+    """LightRAG 的顶层嵌入函数（可 pickle 序列化）。"""
     from lightrag.llm.openai import openai_embed
 
     embeddings = await openai_embed(
@@ -74,10 +73,10 @@ async def lmstudio_embedding_async(texts: List[str]) -> List[List[float]]:
 
 
 class LMStudioRAGIntegration:
-    """Integration class for LM Studio with RAG-Anything."""
+    """LM Studio 与 RAG-Anything 的集成类。"""
 
     def __init__(self):
-        # LM Studio configuration using standard LLM_BINDING variables
+        # 使用标准 LLM_BINDING 变量的 LM Studio 配置
         self.base_url = os.getenv("LLM_BINDING_HOST", "http://localhost:1234/v1")
         self.api_key = os.getenv("LLM_BINDING_API_KEY", "lm-studio")
         self.model_name = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
@@ -85,8 +84,8 @@ class LMStudioRAGIntegration:
             "EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"
         )
 
-        # RAG-Anything configuration
-        # Use a fresh working directory each run to avoid legacy doc_status schema conflicts
+        # RAG-Anything 配置
+        # 每次运行使用新的工作目录以避免旧版 doc_status 模式冲突
         self.config = RAGAnythingConfig(
             working_dir=f"./rag_storage_lmstudio/{uuid.uuid4()}",
             parser="mineru",
@@ -100,14 +99,14 @@ class LMStudioRAGIntegration:
         self.rag = None
 
     async def test_connection(self) -> bool:
-        """Test LM Studio connection."""
+        """测试 LM Studio 连接。"""
         try:
             print(f"🔌 Testing LM Studio connection at: {self.base_url}")
             client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
             models = await client.models.list()
             print(f"✅ Connected successfully! Found {len(models.data)} models")
 
-            # Show available models
+            # 显示可用模型
             print("📊 Available models:")
             for i, model in enumerate(models.data[:5]):
                 marker = "🎯" if model.id == self.model_name else "  "
@@ -132,7 +131,7 @@ class LMStudioRAGIntegration:
                 pass
 
     async def test_chat_completion(self) -> bool:
-        """Test basic chat functionality."""
+        """测试基本聊天功能。"""
         try:
             print(f"💬 Testing chat with model: {self.model_name}")
             client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
@@ -162,18 +161,18 @@ class LMStudioRAGIntegration:
             except Exception:
                 pass
 
-    # Deprecated factory helpers removed to reduce redundancy
+    # 已移除已弃用的工厂辅助函数以减少冗余
 
     def embedding_func_factory(self):
-        """Create a completely serializable embedding function."""
+        """创建完全可序列化的嵌入函数。"""
         return EmbeddingFunc(
-            embedding_dim=768,  # nomic-embed-text-v1.5 default dimension
-            max_token_size=8192,  # nomic-embed-text-v1.5 context length
+            embedding_dim=768,  # nomic-embed-text-v1.5 默认维度
+            max_token_size=8192,  # nomic-embed-text-v1.5 上下文长度
             func=lmstudio_embedding_async,
         )
 
     async def initialize_rag(self):
-        """Initialize RAG-Anything with LM Studio functions."""
+        """使用 LM Studio 函数初始化 RAG-Anything。"""
         print("Initializing RAG-Anything with LM Studio...")
 
         try:
@@ -183,8 +182,8 @@ class LMStudioRAGIntegration:
                 embedding_func=self.embedding_func_factory(),
             )
 
-            # Compatibility: avoid writing unknown field 'multimodal_processed' to LightRAG doc_status
-            # Older LightRAG versions may not accept this extra field in DocProcessingStatus
+            # 兼容性：避免将未知字段 'multimodal_processed' 写入 LightRAG doc_status
+            # 较旧的 LightRAG 版本可能不接受 DocProcessingStatus 中的此额外字段
             async def _noop_mark_multimodal(doc_id: str):
                 return None
 
@@ -197,7 +196,7 @@ class LMStudioRAGIntegration:
             return False
 
     async def process_document_example(self, file_path: str):
-        """Example: Process a document with LM Studio backend."""
+        """示例：使用 LM Studio 后端处理文档。"""
         if not self.rag:
             print("❌ RAG not initialized. Call initialize_rag() first.")
             return
@@ -215,12 +214,12 @@ class LMStudioRAGIntegration:
             print(f"❌ Document processing failed: {str(e)}")
 
     async def query_examples(self):
-        """Example queries with different modes."""
+        """使用不同模式的查询示例。"""
         if not self.rag:
             print("❌ RAG not initialized. Call initialize_rag() first.")
             return
 
-        # Example queries
+        # 查询示例
         queries = [
             ("What are the main topics in the processed documents?", "hybrid"),
             ("Summarize any tables or data found in the documents", "local"),
@@ -237,7 +236,7 @@ class LMStudioRAGIntegration:
                 print(f"❌ Query failed: {str(e)}")
 
     async def simple_query_example(self):
-        """Example basic text query with sample content."""
+        """使用示例内容的基本文本查询示例。"""
         if not self.rag:
             print("❌ RAG not initialized")
             return
@@ -245,7 +244,7 @@ class LMStudioRAGIntegration:
         try:
             print("\nAdding sample content for testing...")
 
-            # Create content list in the format expected by RAGAnything
+            # 创建 RAGAnything 期望格式的内容列表
             content_list = [
                 {
                     "type": "text",
@@ -266,11 +265,11 @@ Key benefits include:
                 }
             ]
 
-            # Insert the content list using the correct method
+            # 使用正确的方法插入内容列表
             await self.rag.insert_content_list(
                 content_list=content_list,
                 file_path="lmstudio_integration_demo.txt",
-                # Use a unique doc_id to avoid collisions and doc_status reuse across runs
+                # 使用唯一的 doc_id 以避免冲突和跨运行重用 doc_status
                 doc_id=f"demo-content-{uuid.uuid4()}",
                 display_stats=True,
             )
@@ -278,7 +277,7 @@ Key benefits include:
 
             print("\nTesting basic text query...")
 
-            # Simple text query example
+            # 简单文本查询示例
             result = await self.rag.aquery(
                 "What are the key benefits of this LM Studio integration?",
                 mode="hybrid",
@@ -290,15 +289,15 @@ Key benefits include:
 
 
 async def main():
-    """Main example function."""
+    """主示例函数。"""
     print("=" * 70)
     print("LM Studio + RAG-Anything Integration Example")
     print("=" * 70)
 
-    # Initialize integration
+    # 初始化集成
     integration = LMStudioRAGIntegration()
 
-    # Test connection
+    # 测试连接
     if not await integration.test_connection():
         return False
 
@@ -306,18 +305,18 @@ async def main():
     if not await integration.test_chat_completion():
         return False
 
-    # Initialize RAG
+    # 初始化 RAG
     print("\n" + "─" * 50)
     if not await integration.initialize_rag():
         return False
 
-    # Example document processing (uncomment and provide a real file path)
+    # 文档处理示例（取消注释并提供真实文件路径）
     # await integration.process_document_example("path/to/your/document.pdf")
 
-    # Example queries (uncomment after processing documents)
+    # 查询示例（处理文档后取消注释）
     # await integration.query_examples()
 
-    # Example basic query
+    # 基本查询示例
     await integration.simple_query_example()
 
     print("\n" + "=" * 70)

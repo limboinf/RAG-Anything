@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Office Document Parsing Test Script for RAG-Anything
+RAG-Anything Office 文档解析测试脚本
 
-This script demonstrates how to parse various Office document formats
-using MinerU, including DOC, DOCX, PPT, PPTX, XLS, and XLSX files.
+此脚本演示如何使用 MinerU 解析各种 Office 文档格式，
+包括 DOC、DOCX、PPT、PPTX、XLS 和 XLSX 文件。
 
-Requirements:
-- LibreOffice installed on the system
-- RAG-Anything package
+依赖项：
+- 系统上已安装 LibreOffice
+- RAG-Anything 包
 
-Usage:
+用法：
     python office_document_test.py --file path/to/office/document.docx
 """
 
@@ -21,7 +21,7 @@ from raganything import RAGAnything
 
 
 def check_libreoffice_installation():
-    """Check if LibreOffice is installed and available"""
+    """检查 LibreOffice 是否已安装且可用"""
     import subprocess
 
     for cmd in ["libreoffice", "soffice"]:
@@ -47,11 +47,11 @@ def check_libreoffice_installation():
 
 
 async def test_office_document_parsing(file_path: str):
-    """Test Office document parsing with MinerU"""
+    """使用 MinerU 测试 Office 文档解析"""
 
     print(f"🧪 Testing Office document parsing: {file_path}")
 
-    # Check if file exists and is a supported Office format
+    # 检查文件是否存在且是否为支持的 Office 格式
     file_path = Path(file_path)
     if not file_path.exists():
         print(f"❌ File does not exist: {file_path}")
@@ -66,11 +66,11 @@ async def test_office_document_parsing(file_path: str):
     print(f"📄 File format: {file_path.suffix.upper()}")
     print(f"📏 File size: {file_path.stat().st_size / 1024:.1f} KB")
 
-    # Initialize RAGAnything (only for parsing functionality)
+    # 初始化 RAGAnything（仅用于解析功能）
     rag = RAGAnything()
 
     try:
-        # Test document parsing with MinerU
+        # 使用 MinerU 测试文档解析
         print("\n🔄 Testing document parsing with MinerU...")
         content_list, md_content = await rag.parse_document(
             file_path=str(file_path),
@@ -83,7 +83,7 @@ async def test_office_document_parsing(file_path: str):
         print(f"   📊 Content blocks: {len(content_list)}")
         print(f"   📝 Markdown length: {len(md_content)} characters")
 
-        # Analyze content types
+        # 分析内容类型
         content_types = {}
         for item in content_list:
             if isinstance(item, dict):
@@ -95,13 +95,13 @@ async def test_office_document_parsing(file_path: str):
             for content_type, count in sorted(content_types.items()):
                 print(f"      • {content_type}: {count}")
 
-        # Display some parsed content preview
+        # 显示解析内容预览
         if md_content.strip():
             print("\n📄 Parsed content preview (first 500 characters):")
             preview = md_content.strip()[:500]
             print(f"   {preview}{'...' if len(md_content) > 500 else ''}")
 
-        # Display some structured content examples
+        # 显示结构化内容示例
         text_items = [
             item
             for item in content_list
@@ -117,7 +117,7 @@ async def test_office_document_parsing(file_path: str):
                         f"   {i}. {preview}{'...' if len(text_content) > 200 else ''}"
                     )
 
-        # Check for images
+        # 检查图片
         image_items = [
             item
             for item in content_list
@@ -128,7 +128,7 @@ async def test_office_document_parsing(file_path: str):
             for i, item in enumerate(image_items, 1):
                 print(f"   {i}. Image path: {item.get('img_path', 'N/A')}")
 
-        # Check for tables
+        # 检查表格
         table_items = [
             item
             for item in content_list
@@ -154,7 +154,7 @@ async def test_office_document_parsing(file_path: str):
 
 
 def main():
-    """Main function"""
+    """主函数"""
     parser = argparse.ArgumentParser(
         description="Test Office document parsing with MinerU"
     )
@@ -167,7 +167,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Check LibreOffice installation
+    # 检查 LibreOffice 安装
     print("🔧 Checking LibreOffice installation...")
     if not check_libreoffice_installation():
         return 1
@@ -176,7 +176,7 @@ def main():
         print("✅ LibreOffice installation check passed!")
         return 0
 
-    # If not just checking dependencies, file argument is required
+    # 如果不仅仅是检查依赖项，则需要 file 参数
     if not args.file:
         print(
             "❌ Error: --file argument is required when not using --check-libreoffice"
@@ -184,7 +184,7 @@ def main():
         parser.print_help()
         return 1
 
-    # Run the parsing test
+    # 运行解析测试
     try:
         success = asyncio.run(test_office_document_parsing(args.file))
         return 0 if success else 1

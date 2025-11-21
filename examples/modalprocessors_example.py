@@ -1,7 +1,7 @@
 """
-Example of directly using modal processors
+直接使用模态处理器的示例
 
-This example demonstrates how to use RAG-Anything's modal processors directly without going through MinerU.
+此示例演示如何直接使用 RAG-Anything 的模态处理器而不通过 MinerU。
 """
 
 import asyncio
@@ -82,20 +82,20 @@ def get_vision_model_func(api_key: str, base_url: str = None):
 
 
 async def process_image_example(lightrag: LightRAG, vision_model_func):
-    """Example of processing an image"""
-    # Create image processor
+    """处理图像的示例"""
+    # 创建图像处理器
     image_processor = ImageModalProcessor(
         lightrag=lightrag, modal_caption_func=vision_model_func
     )
 
-    # Prepare image content
+    # 准备图像内容
     image_content = {
         "img_path": "image.jpg",
         "image_caption": ["Example image caption"],
         "image_footnote": ["Example image footnote"],
     }
 
-    # Process image
+    # 处理图像
     (description, entity_info, _) = await image_processor.process_multimodal_content(
         modal_content=image_content,
         content_type="image",
@@ -109,13 +109,13 @@ async def process_image_example(lightrag: LightRAG, vision_model_func):
 
 
 async def process_table_example(lightrag: LightRAG, llm_model_func):
-    """Example of processing a table"""
-    # Create table processor
+    """处理表格的示例"""
+    # 创建表格处理器
     table_processor = TableModalProcessor(
         lightrag=lightrag, modal_caption_func=llm_model_func
     )
 
-    # Prepare table content
+    # 准备表格内容
     table_content = {
         "table_body": """
         | Name | Age | Occupation |
@@ -127,7 +127,7 @@ async def process_table_example(lightrag: LightRAG, llm_model_func):
         "table_footnote": ["Data updated as of 2024"],
     }
 
-    # Process table
+    # 处理表格
     (description, entity_info, _) = await table_processor.process_multimodal_content(
         modal_content=table_content,
         content_type="table",
@@ -141,16 +141,16 @@ async def process_table_example(lightrag: LightRAG, llm_model_func):
 
 
 async def process_equation_example(lightrag: LightRAG, llm_model_func):
-    """Example of processing a mathematical equation"""
-    # Create equation processor
+    """处理数学方程的示例"""
+    # 创建方程处理器
     equation_processor = EquationModalProcessor(
         lightrag=lightrag, modal_caption_func=llm_model_func
     )
 
-    # Prepare equation content
+    # 准备方程内容
     equation_content = {"text": "E = mc^2", "text_format": "LaTeX"}
 
-    # Process equation
+    # 处理方程
     (description, entity_info, _) = await equation_processor.process_multimodal_content(
         modal_content=equation_content,
         content_type="equation",
@@ -164,7 +164,7 @@ async def process_equation_example(lightrag: LightRAG, llm_model_func):
 
 
 async def initialize_rag(api_key: str, base_url: str = None):
-    # Use environment variables for embedding configuration
+    # 使用环境变量进行嵌入配置
     import os
 
     embedding_dim = int(os.getenv("EMBEDDING_DIM", "3072"))
@@ -203,7 +203,7 @@ async def initialize_rag(api_key: str, base_url: str = None):
 
 
 def main():
-    """Main function to run the example"""
+    """运行示例的主函数"""
     parser = argparse.ArgumentParser(description="Modal Processors Example")
     parser.add_argument("--api-key", required=True, help="OpenAI API key")
     parser.add_argument("--base-url", help="Optional base URL for API")
@@ -218,14 +218,14 @@ def main():
 
 
 async def main_async(api_key: str, base_url: str = None):
-    # Initialize LightRAG
+    # 初始化 LightRAG
     lightrag = await initialize_rag(api_key, base_url)
 
-    # Get model functions
+    # 获取模型函数
     llm_model_func = get_llm_model_func(api_key, base_url)
     vision_model_func = get_vision_model_func(api_key, base_url)
 
-    # Run examples
+    # 运行示例
     await process_image_example(lightrag, vision_model_func)
     await process_table_example(lightrag, llm_model_func)
     await process_equation_example(lightrag, llm_model_func)

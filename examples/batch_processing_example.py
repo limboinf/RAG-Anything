@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 """
-Batch Processing Example for RAG-Anything
+RAG-Anything 批处理示例
 
-This example demonstrates how to use the batch processing capabilities
-to process multiple documents in parallel for improved throughput.
+此示例演示如何使用批处理功能并行处理多个文档以提高吞吐量。
 
-Features demonstrated:
-- Basic batch processing with BatchParser
-- Asynchronous batch processing
-- Integration with RAG-Anything
-- Error handling and progress tracking
-- File filtering and directory processing
+演示的功能：
+- 使用 BatchParser 进行基本批处理
+- 异步批处理
+- 与 RAG-Anything 集成
+- 错误处理和进度跟踪
+- 文件过滤和目录处理
 """
 
 import asyncio
@@ -19,7 +18,7 @@ from pathlib import Path
 import tempfile
 import time
 
-# Add project root directory to Python path
+# 将项目根目录添加到 Python 路径
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -29,11 +28,11 @@ from raganything.batch_parser import BatchParser
 
 
 def create_sample_documents():
-    """Create sample documents for batch processing testing"""
+    """创建用于批处理测试的示例文档"""
     temp_dir = Path(tempfile.mkdtemp())
     sample_files = []
 
-    # Create various document types
+    # 创建各种文档类型
     documents = {
         "document1.txt": "This is a simple text document for testing batch processing.",
         "document2.txt": "Another text document with different content.",
@@ -107,7 +106,7 @@ Continue development and testing of batch processing features.
 
 
 def demonstrate_basic_batch_processing():
-    """Demonstrate basic batch processing functionality"""
+    """演示基本的批处理功能"""
     print("\n" + "=" * 60)
     print("BASIC BATCH PROCESSING DEMONSTRATION")
     print("=" * 60)
@@ -135,11 +134,11 @@ def demonstrate_basic_batch_processing():
         print("  - Progress tracking: enabled")
         print("  - Timeout per file: 60 seconds")
 
-        # Check supported extensions
+        # 检查支持的扩展名
         supported_extensions = batch_parser.get_supported_extensions()
         print(f"  - Supported extensions: {supported_extensions}")
 
-        # Filter files to supported types
+        # 将文件过滤为支持的类型
         supported_files = batch_parser.filter_supported_files(sample_files)
         print("\nFile filtering results:")
         print(f"  - Total files: {len(sample_files)}")
@@ -186,7 +185,7 @@ def demonstrate_basic_batch_processing():
 
 
 async def demonstrate_async_batch_processing():
-    """Demonstrate asynchronous batch processing"""
+    """演示异步批处理"""
     print("\n" + "=" * 60)
     print("ASYNCHRONOUS BATCH PROCESSING DEMONSTRATION")
     print("=" * 60)
@@ -205,7 +204,7 @@ async def demonstrate_async_batch_processing():
             skip_installation_check=True,
         )
 
-        # Process batch asynchronously
+        # 异步处理批次
         output_dir = temp_dir / "async_output"
 
         start_time = time.time()
@@ -233,7 +232,7 @@ async def demonstrate_async_batch_processing():
 
 
 async def demonstrate_rag_integration():
-    """Demonstrate batch processing integration with RAG-Anything"""
+    """演示批处理与 RAG-Anything 的集成"""
     print("\n" + "=" * 60)
     print("RAG-ANYTHING BATCH INTEGRATION DEMONSTRATION")
     print("=" * 60)
@@ -242,7 +241,7 @@ async def demonstrate_rag_integration():
     sample_files, temp_dir = create_sample_documents()
 
     try:
-        # Initialize RAG-Anything with temporary storage
+        # 使用临时存储初始化 RAG-Anything
         config = RAGAnythingConfig(
             working_dir=str(temp_dir / "rag_storage"),
             enable_image_processing=True,
@@ -255,16 +254,16 @@ async def demonstrate_rag_integration():
 
         print("RAG-Anything initialized with batch processing capabilities")
 
-        # Show available batch methods
+        # 显示可用的批处理方法
         batch_methods = [method for method in dir(rag) if "batch" in method.lower()]
         print(f"Available batch methods: {batch_methods}")
 
-        # Demonstrate batch processing with RAG integration
+        # 演示与 RAG 集成的批处理
         print(f"\nProcessing {len(sample_files)} documents with RAG integration...")
 
-        # Use the RAG-integrated batch processing
+        # 使用 RAG 集成的批处理
         try:
-            # Process documents in batch
+            # 批量处理文档
             result = rag.process_documents_batch(
                 file_paths=sample_files,
                 output_dir=str(temp_dir / "rag_batch_output"),
@@ -278,7 +277,7 @@ async def demonstrate_rag_integration():
             print(result.summary())
             print(f"Success rate: {result.success_rate:.1f}%")
 
-            # Demonstrate batch processing with full RAG integration
+            # 演示完全 RAG 集成的批处理
             print("\nProcessing documents with full RAG integration...")
 
             rag_result = await rag.process_documents_with_rag_batch(
@@ -315,21 +314,21 @@ async def demonstrate_rag_integration():
 
 
 def demonstrate_directory_processing():
-    """Demonstrate processing entire directories"""
+    """演示处理整个目录"""
     print("\n" + "=" * 60)
     print("DIRECTORY PROCESSING DEMONSTRATION")
     print("=" * 60)
 
-    # Create a directory structure with nested files
+    # 创建带有嵌套文件的目录结构
     temp_dir = Path(tempfile.mkdtemp())
 
-    # Create main directory files
+    # 创建主目录文件
     main_files = {
         "overview.txt": "Main directory overview document",
         "readme.md": "# Project README\n\nThis is the main project documentation.",
     }
 
-    # Create subdirectory
+    # 创建子目录
     sub_dir = temp_dir / "subdirectory"
     sub_dir.mkdir()
 
@@ -338,7 +337,7 @@ def demonstrate_directory_processing():
         "notes.md": "# Notes\n\nAdditional notes and information.",
     }
 
-    # Write all files
+    # 写入所有文件
     all_files = []
     for filename, content in main_files.items():
         file_path = temp_dir / filename
@@ -367,7 +366,7 @@ def demonstrate_directory_processing():
             skip_installation_check=True,
         )
 
-        # Process entire directory recursively
+        # 递归处理整个目录
         print("\nProcessing entire directory recursively...")
 
         result = batch_parser.process_batch(
@@ -398,14 +397,14 @@ def demonstrate_directory_processing():
 
 
 def demonstrate_error_handling():
-    """Demonstrate error handling and recovery"""
+    """演示错误处理和恢复"""
     print("\n" + "=" * 60)
     print("ERROR HANDLING DEMONSTRATION")
     print("=" * 60)
 
     temp_dir = Path(tempfile.mkdtemp())
 
-    # Create files with various issues
+    # 创建具有各种问题的文件
     files_with_issues = {
         "valid_file.txt": "This is a valid file that should process successfully.",
         "empty_file.txt": "",  # Empty file
@@ -419,7 +418,7 @@ def demonstrate_error_handling():
             f.write(content)
         created_files.append(str(file_path))
 
-    # Add a non-existent file to the list
+    # 向列表添加一个不存在的文件
     created_files.append(str(temp_dir / "non_existent_file.txt"))
 
     try:
@@ -430,7 +429,7 @@ def demonstrate_error_handling():
             size = Path(file_path).stat().st_size if exists else 0
             print(f"  - {name}: {'exists' if exists else 'missing'}, {size} bytes")
 
-        # Create batch parser with short timeout for demonstration
+        # 创建具有短超时的批处理解析器以供演示
         batch_parser = BatchParser(
             parser_type="mineru",
             max_workers=2,
@@ -439,7 +438,7 @@ def demonstrate_error_handling():
             skip_installation_check=True,
         )
 
-        # Process files and handle errors
+        # 处理文件并处理错误
         result = batch_parser.process_batch(
             file_paths=created_files,
             output_dir=str(temp_dir / "error_test_output"),
@@ -462,13 +461,13 @@ def demonstrate_error_handling():
                 error = result.errors.get(file_path, "Unknown error")
                 print(f"  ❌ {Path(file_path).name}: {error}")
 
-        # Demonstrate retry logic
+        # 演示重试逻辑
         if result.failed_files:
             print(
                 f"\nDemonstrating retry logic for {len(result.failed_files)} failed files..."
             )
 
-            # Retry only the failed files
+            # 仅重试失败的文件
             retry_result = batch_parser.process_batch(
                 file_paths=result.failed_files,
                 output_dir=str(temp_dir / "retry_output"),
@@ -485,8 +484,8 @@ def demonstrate_error_handling():
 
 
 async def main():
-    """Main demonstration function"""
-    # Configure logging
+    """主演示函数"""
+    # 配置日志
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -503,22 +502,22 @@ async def main():
 
     results = {}
 
-    # Run demonstrations
+    # 运行演示
     print("\n🚀 Starting demonstrations...")
 
-    # Basic batch processing
+    # 基本批处理
     results["basic"] = demonstrate_basic_batch_processing()
 
-    # Asynchronous processing
+    # 异步处理
     results["async"] = await demonstrate_async_batch_processing()
 
-    # RAG integration
+    # RAG 集成
     results["rag"] = await demonstrate_rag_integration()
 
-    # Directory processing
+    # 目录处理
     results["directory"] = demonstrate_directory_processing()
 
-    # Error handling
+    # 错误处理
     results["error_handling"] = demonstrate_error_handling()
 
     # Summary

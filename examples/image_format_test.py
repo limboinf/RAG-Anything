@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Image Format Parsing Test Script for RAG-Anything
+RAG-Anything 图像格式解析测试脚本
 
-This script demonstrates how to parse various image formats
-using MinerU, including JPG, PNG, BMP, TIFF, GIF, and WebP files.
+此脚本演示如何使用 MinerU 解析各种图像格式，
+包括 JPG、PNG、BMP、TIFF、GIF 和 WebP 文件。
 
-Requirements:
-- PIL/Pillow library for format conversion
-- RAG-Anything package
+依赖项：
+- PIL/Pillow 库用于格式转换
+- RAG-Anything 包
 
-Usage:
+用法：
     python image_format_test.py --file path/to/image.bmp
 """
 
@@ -21,7 +21,7 @@ from raganything import RAGAnything
 
 
 def check_pillow_installation():
-    """Check if PIL/Pillow is installed and available"""
+    """检查 PIL/Pillow 是否已安装且可用"""
     try:
         from PIL import Image
 
@@ -36,7 +36,7 @@ def check_pillow_installation():
 
 
 def get_image_info(image_path: Path):
-    """Get detailed image information"""
+    """获取详细的图像信息"""
     try:
         from PIL import Image
 
@@ -53,11 +53,11 @@ def get_image_info(image_path: Path):
 
 
 async def test_image_format_parsing(file_path: str):
-    """Test image format parsing with MinerU"""
+    """使用 MinerU 测试图像格式解析"""
 
     print(f"🧪 Testing image format parsing: {file_path}")
 
-    # Check if file exists and is a supported image format
+    # 检查文件是否存在且是否为支持的图像格式
     file_path = Path(file_path)
     if not file_path.exists():
         print(f"❌ File does not exist: {file_path}")
@@ -81,7 +81,7 @@ async def test_image_format_parsing(file_path: str):
     print(f"📸 File format: {file_path.suffix.upper()}")
     print(f"📏 File size: {file_path.stat().st_size / 1024:.1f} KB")
 
-    # Get detailed image information
+    # 获取详细图像信息
     img_info = get_image_info(file_path)
     if "error" not in img_info:
         print("🖼️  Image info:")
@@ -90,7 +90,7 @@ async def test_image_format_parsing(file_path: str):
         print(f"   • Size: {img_info['size'][0]}x{img_info['size'][1]}")
         print(f"   • Has transparency: {img_info['has_transparency']}")
 
-    # Check format compatibility with MinerU
+    # 检查与 MinerU 的格式兼容性
     mineru_native_formats = {".jpg", ".jpeg", ".png"}
     needs_conversion = file_path.suffix.lower() not in mineru_native_formats
 
@@ -101,16 +101,16 @@ async def test_image_format_parsing(file_path: str):
     else:
         print(f"✅ Format {file_path.suffix.upper()} is natively supported by MinerU")
 
-    # Initialize RAGAnything (only for parsing functionality)
+    # 初始化 RAGAnything（仅用于解析功能）
     rag = RAGAnything()
 
     try:
-        # Test image parsing with MinerU
+        # 使用 MinerU 测试图像解析
         print("\n🔄 Testing image parsing with MinerU...")
         content_list, md_content = await rag.parse_document(
             file_path=str(file_path),
             output_dir="./test_output",
-            parse_method="ocr",  # Images use OCR method
+            parse_method="ocr",  # 图像使用 OCR 方法
             display_stats=True,
         )
 
@@ -118,7 +118,7 @@ async def test_image_format_parsing(file_path: str):
         print(f"   📊 Content blocks: {len(content_list)}")
         print(f"   📝 Markdown length: {len(md_content)} characters")
 
-        # Analyze content types
+        # 分析内容类型
         content_types = {}
         for item in content_list:
             if isinstance(item, dict):
@@ -130,7 +130,7 @@ async def test_image_format_parsing(file_path: str):
             for content_type, count in sorted(content_types.items()):
                 print(f"      • {content_type}: {count}")
 
-        # Display extracted text (if any)
+        # 显示提取的文本（如果有）
         if md_content.strip():
             print("\n📄 Extracted text preview (first 500 characters):")
             preview = md_content.strip()[:500]
@@ -138,7 +138,7 @@ async def test_image_format_parsing(file_path: str):
         else:
             print("\n📄 No text extracted from the image")
 
-        # Display image processing results
+        # 显示图像处理结果
         image_items = [
             item
             for item in content_list
@@ -152,7 +152,7 @@ async def test_image_format_parsing(file_path: str):
                 if caption:
                     print(f"      Caption: {caption[0] if caption else 'N/A'}")
 
-        # Display text blocks (OCR results)
+        # 显示文本块（OCR 结果）
         text_items = [
             item
             for item in content_list
@@ -168,7 +168,7 @@ async def test_image_format_parsing(file_path: str):
                         f"   {i}. {preview}{'...' if len(text_content) > 200 else ''}"
                     )
 
-        # Check for any tables detected in the image
+        # 检查图像中检测到的表格
         table_items = [
             item
             for item in content_list
@@ -192,7 +192,7 @@ async def test_image_format_parsing(file_path: str):
 
 
 def main():
-    """Main function"""
+    """主函数"""
     parser = argparse.ArgumentParser(
         description="Test image format parsing with MinerU"
     )
@@ -203,7 +203,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Check PIL/Pillow installation
+    # 检查 PIL/Pillow 安装
     print("🔧 Checking PIL/Pillow installation...")
     if not check_pillow_installation():
         return 1
@@ -212,13 +212,13 @@ def main():
         print("✅ PIL/Pillow installation check passed!")
         return 0
 
-    # If not just checking dependencies, file argument is required
+    # 如果不仅仅是检查依赖项，则需要 file 参数
     if not args.file:
         print("❌ Error: --file argument is required when not using --check-pillow")
         parser.print_help()
         return 1
 
-    # Run the parsing test
+    # 运行解析测试
     try:
         success = asyncio.run(test_image_format_parsing(args.file))
         return 0 if success else 1

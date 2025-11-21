@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 """
-Enhanced Markdown Conversion Example for RAG-Anything
+RAG-Anything 增强型 Markdown 转换示例
 
-This example demonstrates the enhanced markdown to PDF conversion capabilities
-with multiple backends, advanced styling, and professional formatting.
+此示例演示了增强型 Markdown 到 PDF 转换功能，
+支持多个后端、高级样式和专业格式化。
 
-Features demonstrated:
-- Basic markdown to PDF conversion
-- Multiple conversion backends (WeasyPrint, Pandoc)
-- Custom CSS styling and configuration
-- Backend detection and selection
-- Error handling and fallback mechanisms
-- Command-line interface usage
+演示的功能：
+- 基本的 Markdown 到 PDF 转换
+- 多个转换后端（WeasyPrint、Pandoc）
+- 自定义 CSS 样式和配置
+- 后端检测和选择
+- 错误处理和回退机制
+- 命令行界面使用
 """
 
 import logging
 from pathlib import Path
 import tempfile
 
-# Add project root directory to Python path
+# 将项目根目录添加到 Python 路径
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -27,9 +27,9 @@ from raganything.enhanced_markdown import EnhancedMarkdownConverter, MarkdownCon
 
 
 def create_sample_markdown_content():
-    """Create comprehensive sample markdown content for testing"""
+    """创建用于测试的综合示例 Markdown 内容"""
 
-    # Basic sample
+    # 基础示例
     basic_content = """# Basic Markdown Sample
 
 ## Introduction
@@ -62,7 +62,7 @@ def hello_world():
 ```
 """
 
-    # Technical documentation sample
+    # 技术文档示例
     technical_content = """# Technical Documentation
 
 ## Table of Contents
@@ -205,7 +205,7 @@ The enhanced markdown conversion system provides professional-quality PDF genera
 *Version: 1.0.0*
 """
 
-    # Academic paper sample
+    # 学术论文示例
     academic_content = """# Research Paper: Advanced Document Processing
 
 **Authors:** Alice Johnson¹, Bob Smith², Carol Williams¹
@@ -370,16 +370,16 @@ This research demonstrates that enhanced markdown conversion provides significan
 
 
 def demonstrate_basic_conversion():
-    """Demonstrate basic markdown to PDF conversion"""
+    """演示基本的 Markdown 到 PDF 转换"""
     print("\n" + "=" * 60)
     print("BASIC MARKDOWN CONVERSION DEMONSTRATION")
     print("=" * 60)
 
     try:
-        # Create converter with default settings
+        # 使用默认设置创建转换器
         converter = EnhancedMarkdownConverter()
 
-        # Show backend information
+        # 显示后端信息
         backend_info = converter.get_backend_info()
         print("Available conversion backends:")
         for backend, available in backend_info["available_backends"].items():
@@ -387,11 +387,11 @@ def demonstrate_basic_conversion():
             print(f"  {status} {backend}")
         print(f"Recommended backend: {backend_info['recommended_backend']}")
 
-        # Get sample content
+        # 获取示例内容
         samples = create_sample_markdown_content()
         temp_dir = Path(tempfile.mkdtemp())
 
-        # Convert basic sample
+        # 转换基础示例
         basic_md_path = temp_dir / "basic_sample.md"
         with open(basic_md_path, "w", encoding="utf-8") as f:
             f.write(samples["basic"])
@@ -418,7 +418,7 @@ def demonstrate_basic_conversion():
 
 
 def demonstrate_backend_comparison():
-    """Demonstrate different conversion backends"""
+    """演示不同的转换后端"""
     print("\n" + "=" * 60)
     print("BACKEND COMPARISON DEMONSTRATION")
     print("=" * 60)
@@ -427,14 +427,14 @@ def demonstrate_backend_comparison():
         samples = create_sample_markdown_content()
         temp_dir = Path(tempfile.mkdtemp())
 
-        # Create technical document
+        # 创建技术文档
         tech_md_path = temp_dir / "technical.md"
         with open(tech_md_path, "w", encoding="utf-8") as f:
             f.write(samples["technical"])
 
         print("Testing different backends with technical document...")
 
-        # Test different backends
+        # 测试不同的后端
         backends = ["auto", "weasyprint", "pandoc"]
         results = {}
 
@@ -498,7 +498,7 @@ def demonstrate_backend_comparison():
 
 
 def demonstrate_custom_styling():
-    """Demonstrate custom CSS styling and configuration"""
+    """演示自定义 CSS 样式和配置"""
     print("\n" + "=" * 60)
     print("CUSTOM STYLING DEMONSTRATION")
     print("=" * 60)
@@ -507,7 +507,7 @@ def demonstrate_custom_styling():
         samples = create_sample_markdown_content()
         temp_dir = Path(tempfile.mkdtemp())
 
-        # Create custom CSS
+        # 创建自定义 CSS
         custom_css = """
         body {
             font-family: 'Times New Roman', serif;
@@ -657,7 +657,7 @@ def demonstrate_custom_styling():
         }
         """
 
-        # Create custom configuration
+        # 创建自定义配置
         config = MarkdownConfig(
             page_size="A4",
             margin="0.8in",
@@ -670,7 +670,7 @@ def demonstrate_custom_styling():
 
         converter = EnhancedMarkdownConverter(config)
 
-        # Convert academic sample with custom styling
+        # 使用自定义样式转换学术示例
         academic_md_path = temp_dir / "academic_styled.md"
         with open(academic_md_path, "w", encoding="utf-8") as f:
             f.write(samples["academic"])
@@ -694,7 +694,7 @@ def demonstrate_custom_styling():
             print("✅ Custom styling conversion successful!")
             print(f"   Output: {temp_dir / 'academic_styled.pdf'}")
 
-            # Also create a default version for comparison
+            # 同时创建默认版本以供比较
             default_converter = EnhancedMarkdownConverter()
             default_success = default_converter.convert_file_to_pdf(
                 input_path=str(academic_md_path),
@@ -715,13 +715,13 @@ def demonstrate_custom_styling():
 
 
 def demonstrate_content_conversion():
-    """Demonstrate converting markdown content directly (not from file)"""
+    """演示直接转换 Markdown 内容（不是从文件）"""
     print("\n" + "=" * 60)
     print("CONTENT CONVERSION DEMONSTRATION")
     print("=" * 60)
 
     try:
-        # Create markdown content programmatically
+        # 以编程方式创建 Markdown 内容
         dynamic_content = f"""# Dynamic Content Example
 
 ## Generated Information
@@ -779,7 +779,7 @@ Direct content conversion is useful for:
         print("  - Generated timestamps")
         print("  - Programmatic examples")
 
-        # Convert content directly to PDF
+        # 直接将内容转换为 PDF
         output_path = temp_dir / "dynamic_content.pdf"
 
         success = converter.convert_markdown_to_pdf(
@@ -792,7 +792,7 @@ Direct content conversion is useful for:
             print("✅ Content conversion successful!")
             print(f"   Output: {output_path}")
 
-            # Show file size
+            # 显示文件大小
             file_size = output_path.stat().st_size
             print(f"   Generated PDF size: {file_size} bytes")
         else:
@@ -806,7 +806,7 @@ Direct content conversion is useful for:
 
 
 def demonstrate_error_handling():
-    """Demonstrate error handling and fallback mechanisms"""
+    """演示错误处理和回退机制"""
     print("\n" + "=" * 60)
     print("ERROR HANDLING DEMONSTRATION")
     print("=" * 60)
@@ -814,7 +814,7 @@ def demonstrate_error_handling():
     try:
         temp_dir = Path(tempfile.mkdtemp())
 
-        # Test cases with various issues
+        # 具有各种问题的测试用例
         test_cases = {
             "invalid_markdown": """# Invalid Markdown
 
@@ -895,7 +895,7 @@ Arrows: ← ↑ → ↓ ↔ ↕ ↖ ↗ ↘ ↙
             except Exception as e:
                 print(f"  ❌ Test case failed: {str(e)}")
 
-        # Demonstrate robust conversion with fallbacks
+        # 演示具有回退功能的健壮转换
         print("\nDemonstrating robust conversion with fallback logic...")
 
         def robust_convert(content, output_path):
@@ -953,8 +953,8 @@ Arrows: ← ↑ → ↓ ↔ ↕ ↖ ↗ ↘ ↙
 
 
 def main():
-    """Main demonstration function"""
-    # Configure logging
+    """主演示函数"""
+    # 配置日志
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -973,26 +973,26 @@ def main():
 
     results = {}
 
-    # Run demonstrations
+    # 运行演示
     print("\n🚀 Starting demonstrations...")
 
-    # Basic conversion
+    # 基本转换
     success, temp_dir = demonstrate_basic_conversion()
     results["basic"] = success
 
-    # Backend comparison
+    # 后端比较
     backend_results, _ = demonstrate_backend_comparison()
     results["backends"] = backend_results
 
-    # Custom styling
+    # 自定义样式
     styling_success, _ = demonstrate_custom_styling()
     results["styling"] = styling_success
 
-    # Content conversion
+    # 内容转换
     content_success, _ = demonstrate_content_conversion()
     results["content"] = content_success
 
-    # Error handling
+    # 错误处理
     error_results, _ = demonstrate_error_handling()
     results["error_handling"] = error_results
 

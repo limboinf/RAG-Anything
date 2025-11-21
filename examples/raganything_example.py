@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Example script demonstrating the integration of MinerU parser with RAGAnything
+演示 MinerU 解析器与 RAGAnything 集成的示例脚本
 
-This example shows how to:
-1. Process documents with RAGAnything using MinerU parser
-2. Perform pure text queries using aquery() method
-3. Perform multimodal queries with specific multimodal content using aquery_with_multimodal() method
-4. Handle different types of multimodal content (tables, equations) in queries
+此示例展示如何：
+1. 使用 MinerU 解析器通过 RAGAnything 处理文档
+2. 使用 aquery() 方法执行纯文本查询
+3. 使用 aquery_with_multimodal() 方法执行包含特定多模态内容的查询
+4. 在查询中处理不同类型的多模态内容（表格、公式）
 """
 
 import os
@@ -16,7 +16,7 @@ import logging
 import logging.config
 from pathlib import Path
 
-# Add project root directory to Python path
+# 将项目根目录添加到 Python 路径
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -31,15 +31,15 @@ load_dotenv(dotenv_path=".env", override=False)
 
 
 def configure_logging():
-    """Configure logging for the application"""
-    # Get log directory path from environment variable or use current directory
+    """为应用程序配置日志"""
+    # 从环境变量获取日志目录路径，或使用当前目录
     log_dir = os.getenv("LOG_DIR", os.getcwd())
     log_file_path = os.path.abspath(os.path.join(log_dir, "raganything_example.log"))
 
     print(f"\nRAGAnything example log file: {log_file_path}\n")
     os.makedirs(os.path.dirname(log_dir), exist_ok=True)
 
-    # Get log file max size and backup count from environment variables
+    # 从环境变量获取日志文件最大大小和备份数量
     log_max_bytes = int(os.getenv("LOG_MAX_BYTES", 10485760))  # Default 10MB
     log_backup_count = int(os.getenv("LOG_BACKUP_COUNT", 5))  # Default 5 backups
 
@@ -80,9 +80,9 @@ def configure_logging():
         }
     )
 
-    # Set the logger level to INFO
+    # 将日志记录器级别设置为 INFO
     logger.setLevel(logging.INFO)
-    # Enable verbose debug if needed
+    # 如果需要，启用详细调试
     set_verbose_debug(os.getenv("VERBOSE", "false").lower() == "true")
 
 
@@ -95,27 +95,27 @@ async def process_with_rag(
     parser: str = None,
 ):
     """
-    Process document with RAGAnything
+    使用 RAGAnything 处理文档
 
-    Args:
-        file_path: Path to the document
-        output_dir: Output directory for RAG results
-        api_key: OpenAI API key
-        base_url: Optional base URL for API
-        working_dir: Working directory for RAG storage
+    参数：
+        file_path: 文档路径
+        output_dir: RAG 结果的输出目录
+        api_key: OpenAI API 密钥
+        base_url: 可选的 API 基础 URL
+        working_dir: RAG 存储的工作目录
     """
     try:
-        # Create RAGAnything configuration
+        # 创建 RAGAnything 配置
         config = RAGAnythingConfig(
             working_dir=working_dir or "./rag_storage",
-            parser=parser,  # Parser selection: mineru or docling
-            parse_method="auto",  # Parse method: auto, ocr, or txt
+            parser=parser,  # 解析器选择：mineru 或 docling
+            parse_method="auto",  # 解析方法：auto、ocr 或 txt
             enable_image_processing=True,
             enable_table_processing=True,
             enable_equation_processing=True,
         )
 
-        # Define LLM model function
+        # 定义 LLM 模型函数
         def llm_model_func(prompt, system_prompt=None, history_messages=[], **kwargs):
             return openai_complete_if_cache(
                 "gpt-4o-mini",
@@ -127,7 +127,7 @@ async def process_with_rag(
                 **kwargs,
             )
 
-        # Define vision model function for image processing
+        # 定义用于图像处理的视觉模型函数
         def vision_model_func(
             prompt,
             system_prompt=None,
@@ -136,7 +136,7 @@ async def process_with_rag(
             messages=None,
             **kwargs,
         ):
-            # If messages format is provided (for multimodal VLM enhanced query), use it directly
+            # 如果提供了消息格式（用于多模态 VLM 增强查询），直接使用它
             if messages:
                 return openai_complete_if_cache(
                     "gpt-4o",
@@ -148,7 +148,7 @@ async def process_with_rag(
                     base_url=base_url,
                     **kwargs,
                 )
-            # Traditional single image format
+            # 传统的单图像格式
             elif image_data:
                 return openai_complete_if_cache(
                     "gpt-4o",
@@ -178,11 +178,11 @@ async def process_with_rag(
                     base_url=base_url,
                     **kwargs,
                 )
-            # Pure text format
+            # 纯文本格式
             else:
                 return llm_model_func(prompt, system_prompt, history_messages, **kwargs)
 
-        # Define embedding function - using environment variables for configuration
+        # 定义嵌入函数 - 使用环境变量进行配置
         embedding_dim = int(os.getenv("EMBEDDING_DIM", "3072"))
         embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
 
@@ -197,7 +197,7 @@ async def process_with_rag(
             ),
         )
 
-        # Initialize RAGAnything with new dataclass structure
+        # 使用新的数据类结构初始化 RAGAnything
         rag = RAGAnything(
             config=config,
             llm_model_func=llm_model_func,
@@ -205,15 +205,15 @@ async def process_with_rag(
             embedding_func=embedding_func,
         )
 
-        # Process document
+        # 处理文档
         await rag.process_document_complete(
             file_path=file_path, output_dir=output_dir, parse_method="auto"
         )
 
-        # Example queries - demonstrating different query approaches
+        # 示例查询 - 演示不同的查询方法
         logger.info("\nQuerying processed document:")
 
-        # 1. Pure text queries using aquery()
+        # 1. 使用 aquery() 进行纯文本查询
         text_queries = [
             "What is the main content of the document?",
             "What are the key topics discussed?",
@@ -224,7 +224,7 @@ async def process_with_rag(
             result = await rag.aquery(query, mode="hybrid")
             logger.info(f"Answer: {result}")
 
-        # 2. Multimodal query with specific multimodal content using aquery_with_multimodal()
+        # 2. 使用 aquery_with_multimodal() 进行包含特定多模态内容的查询
         logger.info(
             "\n[Multimodal Query]: Analyzing performance data in context of document"
         )
@@ -244,7 +244,7 @@ async def process_with_rag(
         )
         logger.info(f"Answer: {multimodal_result}")
 
-        # 3. Another multimodal query with equation content
+        # 3. 另一个包含公式内容的多模态查询
         logger.info("\n[Multimodal Query]: Mathematical formula analysis")
         equation_result = await rag.aquery_with_multimodal(
             "Explain this formula and relate it to any mathematical concepts in the document",
@@ -267,7 +267,7 @@ async def process_with_rag(
 
 
 def main():
-    """Main function to run the example"""
+    """运行示例的主函数"""
     parser = argparse.ArgumentParser(description="MinerU RAG Example")
     parser.add_argument("file_path", help="Path to the document to process")
     parser.add_argument(
@@ -294,17 +294,17 @@ def main():
 
     args = parser.parse_args()
 
-    # Check if API key is provided
+    # 检查是否提供了 API 密钥
     if not args.api_key:
         logger.error("Error: OpenAI API key is required")
         logger.error("Set api key environment variable or use --api-key option")
         return
 
-    # Create output directory if specified
+    # 如果指定，创建输出目录
     if args.output:
         os.makedirs(args.output, exist_ok=True)
 
-    # Process with RAG
+    # 使用 RAG 处理
     asyncio.run(
         process_with_rag(
             args.file_path,
@@ -318,7 +318,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # Configure logging first
+    # 首先配置日志
     configure_logging()
 
     print("RAGAnything Example")
