@@ -1,12 +1,12 @@
 # type: ignore
 """
-Generic Document Parser Utility
+通用文档解析工具
 
-This module provides functionality for parsing PDF and image documents using MinerU 2.0 library,
-and converts the parsing results into markdown and JSON formats
+本模块提供使用 MinerU 2.0 库解析 PDF 和图像文档的功能,
+并将解析结果转换为 markdown 和 JSON 格式
 
-Note: MinerU 2.0 no longer includes LibreOffice document conversion module.
-For Office documents (.doc, .docx, .ppt, .pptx), please convert them to PDF format first.
+注意: MinerU 2.0 不再包含 LibreOffice 文档转换模块。
+对于 Office 文档 (.doc, .docx, .ppt, .pptx),请先将它们转换为 PDF 格式。
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ T = TypeVar("T")
 
 
 class MineruExecutionError(Exception):
-    """catch mineru error"""
+    """捕获 mineru 错误"""
 
     def __init__(self, return_code, error_msg):
         self.return_code = return_code
@@ -45,21 +45,21 @@ class MineruExecutionError(Exception):
 
 class Parser:
     """
-    Base class for document parsing utilities.
+    文档解析工具的基类。
 
-    Defines common functionality and constants for parsing different document types.
+    定义用于解析不同文档类型的通用功能和常量。
     """
 
-    # Define common file formats
+    # 定义常见文件格式
     OFFICE_FORMATS = {".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx"}
     IMAGE_FORMATS = {".png", ".jpeg", ".jpg", ".bmp", ".tiff", ".tif", ".gif", ".webp"}
     TEXT_FORMATS = {".txt", ".md"}
 
-    # Class-level logger
+    # 类级别的日志记录器
     logger = logging.getLogger(__name__)
 
     def __init__(self) -> None:
-        """Initialize the base parser."""
+        """初始化基础解析器。"""
         pass
 
     @staticmethod
@@ -67,25 +67,25 @@ class Parser:
         doc_path: Union[str, Path], output_dir: Optional[str] = None
     ) -> Path:
         """
-        Convert Office document (.doc, .docx, .ppt, .pptx, .xls, .xlsx) to PDF.
-        Requires LibreOffice to be installed.
+        将 Office 文档 (.doc, .docx, .ppt, .pptx, .xls, .xlsx) 转换为 PDF。
+        需要安装 LibreOffice。
 
         Args:
-            doc_path: Path to the Office document file
-            output_dir: Output directory for the PDF file
+            doc_path: Office 文档文件的路径
+            output_dir: PDF 文件的输出目录
 
         Returns:
-            Path to the generated PDF file
+            生成的 PDF 文件的路径
         """
         try:
-            # Convert to Path object for easier handling
+            # 转换为 Path 对象以便于处理
             doc_path = Path(doc_path)
             if not doc_path.exists():
                 raise FileNotFoundError(f"Office document does not exist: {doc_path}")
 
             name_without_suff = doc_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -93,17 +93,17 @@ class Parser:
 
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Create temporary directory for PDF conversion
+            # 为 PDF 转换创建临时目录
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
 
-                # Convert to PDF using LibreOffice
+                # 使用 LibreOffice 转换为 PDF
                 logging.info(f"Converting {doc_path.name} to PDF using LibreOffice...")
 
-                # Prepare subprocess parameters to hide console window on Windows
+                # 准备子进程参数以在 Windows 上隐藏控制台窗口
                 import platform
 
-                # Try LibreOffice commands in order of preference
+                # 按优先顺序尝试 LibreOffice 命令
                 commands_to_try = ["libreoffice", "soffice"]
 
                 conversion_successful = False
@@ -119,16 +119,16 @@ class Parser:
                             str(doc_path),
                         ]
 
-                        # Prepare conversion subprocess parameters
+                        # 准备转换子进程参数
                         convert_subprocess_kwargs = {
                             "capture_output": True,
                             "text": True,
-                            "timeout": 60,  # 60 second timeout
+                            "timeout": 60,  # 60 秒超时
                             "encoding": "utf-8",
                             "errors": "ignore",
                         }
 
-                        # Hide console window on Windows
+                        # 在 Windows 上隐藏控制台窗口
                         if platform.system() == "Windows":
                             convert_subprocess_kwargs["creationflags"] = (
                                 subprocess.CREATE_NO_WINDOW
@@ -168,7 +168,7 @@ class Parser:
                         "Alternatively, convert the document to PDF manually."
                     )
 
-                # Find the generated PDF
+                # 查找生成的 PDF
                 pdf_files = list(temp_path.glob("*.pdf"))
                 if not pdf_files:
                     raise RuntimeError(
@@ -181,14 +181,14 @@ class Parser:
                     f"Generated PDF: {pdf_path.name} ({pdf_path.stat().st_size} bytes)"
                 )
 
-                # Validate the generated PDF
-                if pdf_path.stat().st_size < 100:  # Very small file, likely empty
+                # 验证生成的 PDF
+                if pdf_path.stat().st_size < 100:  # 非常小的文件,可能是空的
                     raise RuntimeError(
                         "Generated PDF appears to be empty or corrupted. "
                         "Original file may have issues or LibreOffice conversion failed."
                     )
 
-                # Copy PDF to final output directory
+                # 将 PDF 复制到最终输出目录
                 final_pdf_path = base_output_dir / f"{name_without_suff}.pdf"
                 import shutil
 
@@ -205,31 +205,31 @@ class Parser:
         text_path: Union[str, Path], output_dir: Optional[str] = None
     ) -> Path:
         """
-        Convert text file (.txt, .md) to PDF using ReportLab with full markdown support.
+        使用 ReportLab 将文本文件 (.txt, .md) 转换为 PDF,支持完整的 markdown。
 
         Args:
-            text_path: Path to the text file
-            output_dir: Output directory for the PDF file
+            text_path: 文本文件的路径
+            output_dir: PDF 文件的输出目录
 
         Returns:
-            Path to the generated PDF file
+            生成的 PDF 文件的路径
         """
         try:
             text_path = Path(text_path)
             if not text_path.exists():
                 raise FileNotFoundError(f"Text file does not exist: {text_path}")
 
-            # Supported text formats
+            # 支持的文本格式
             supported_text_formats = {".txt", ".md"}
             if text_path.suffix.lower() not in supported_text_formats:
                 raise ValueError(f"Unsupported text format: {text_path.suffix}")
 
-            # Read the text content
+            # 读取文本内容
             try:
                 with open(text_path, "r", encoding="utf-8") as f:
                     text_content = f.read()
             except UnicodeDecodeError:
-                # Try with different encodings
+                # 尝试使用不同的编码
                 for encoding in ["gbk", "latin-1", "cp1252"]:
                     try:
                         with open(text_path, "r", encoding=encoding) as f:
@@ -243,7 +243,7 @@ class Parser:
                         f"Could not decode text file {text_path.name} with any supported encoding"
                     )
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -252,7 +252,7 @@ class Parser:
             base_output_dir.mkdir(parents=True, exist_ok=True)
             pdf_path = base_output_dir / f"{text_path.stem}.pdf"
 
-            # Convert text to PDF
+            # 将文本转换为 PDF
             logging.info(f"Converting {text_path.name} to PDF...")
 
             try:
@@ -286,7 +286,7 @@ class Parser:
                         f"Failed to register WenQuanYi font: {e}. Chinese characters may not render correctly."
                     )
 
-                # Create PDF document
+                # 创建 PDF 文档
                 doc = SimpleDocTemplate(
                     str(pdf_path),
                     pagesize=A4,
@@ -296,7 +296,7 @@ class Parser:
                     bottomMargin=inch,
                 )
 
-                # Get styles
+                # 获取样式
                 styles = getSampleStyleSheet()
                 normal_style = styles["Normal"]
                 heading_style = styles["Heading1"]
@@ -304,14 +304,14 @@ class Parser:
                     normal_style.fontName = "WenQuanYi"
                     heading_style.fontName = "WenQuanYi"
 
-                # Try to register a font that supports Chinese characters
+                # 尝试注册支持中文字符的字体
                 try:
-                    # Try to use system fonts that support Chinese
+                    # 尝试使用支持中文的系统字体
                     import platform
 
                     system = platform.system()
                     if system == "Windows":
-                        # Try common Windows fonts
+                        # 尝试常见的 Windows 字体
                         for font_name in ["SimSun", "SimHei", "Microsoft YaHei"]:
                             try:
                                 from reportlab.pdfbase.cidfonts import (
@@ -338,14 +338,14 @@ class Parser:
                             except Exception:
                                 continue
                 except Exception:
-                    pass  # Use default fonts if Chinese font setup fails
+                    pass  # 如果中文字体设置失败,使用默认字体
 
-                # Build content
+                # 构建内容
                 story = []
 
-                # Handle markdown or plain text
+                # 处理 markdown 或纯文本
                 if text_path.suffix.lower() == ".md":
-                    # Handle markdown content - simplified implementation
+                    # 处理 markdown 内容 - 简化实现
                     lines = text_content.split("\n")
                     for line in lines:
                         line = line.strip()
@@ -353,7 +353,7 @@ class Parser:
                             story.append(Spacer(1, 12))
                             continue
 
-                        # Headers
+                        # 标题
                         if line.startswith("#"):
                             level = len(line) - len(line.lstrip("#"))
                             header_text = line.lstrip("#").strip()
@@ -367,16 +367,16 @@ class Parser:
                                 )
                                 story.append(Paragraph(header_text, header_style))
                         else:
-                            # Regular text
+                            # 常规文本
                             story.append(Paragraph(line, normal_style))
                             story.append(Spacer(1, 6))
                 else:
-                    # Handle plain text files (.txt)
+                    # 处理纯文本文件 (.txt)
                     logging.info(
                         f"Processing plain text file with {len(text_content)} characters..."
                     )
 
-                    # Split text into lines and process each line
+                    # 将文本分割为行并处理每一行
                     lines = text_content.split("\n")
                     line_count = 0
 
@@ -384,30 +384,30 @@ class Parser:
                         line = line.rstrip()
                         line_count += 1
 
-                        # Empty lines
+                        # 空行
                         if not line.strip():
                             story.append(Spacer(1, 6))
                             continue
 
-                        # Regular text lines
-                        # Escape special characters for ReportLab
+                        # 常规文本行
+                        # 转义 ReportLab 的特殊字符
                         safe_line = (
                             line.replace("&", "&amp;")
                             .replace("<", "&lt;")
                             .replace(">", "&gt;")
                         )
 
-                        # Create paragraph
+                        # 创建段落
                         story.append(Paragraph(safe_line, normal_style))
                         story.append(Spacer(1, 3))
 
                     logging.info(f"Added {line_count} lines to PDF")
 
-                    # If no content was added, add a placeholder
+                    # 如果没有添加任何内容,添加占位符
                     if not story:
                         story.append(Paragraph("(Empty text file)", normal_style))
 
-                # Build PDF
+                # 构建 PDF
                 doc.build(story)
                 logging.info(
                     f"Successfully converted {text_path.name} to PDF ({pdf_path.stat().st_size / 1024:.1f} KB)"
@@ -423,7 +423,7 @@ class Parser:
                     f"Failed to convert text file {text_path.name} to PDF: {str(e)}"
                 )
 
-            # Validate the generated PDF
+            # 验证生成的 PDF
             if not pdf_path.exists() or pdf_path.stat().st_size < 100:
                 raise RuntimeError(
                     f"PDF conversion failed for {text_path.name} - generated PDF is empty or corrupted."
@@ -438,35 +438,35 @@ class Parser:
     @staticmethod
     def _process_inline_markdown(text: str) -> str:
         """
-        Process inline markdown formatting (bold, italic, code, links)
+        处理内联 markdown 格式化 (粗体、斜体、代码、链接)
 
         Args:
-            text: Raw text with markdown formatting
+            text: 带有 markdown 格式的原始文本
 
         Returns:
-            Text with ReportLab markup
+            带有 ReportLab 标记的文本
         """
         import re
 
-        # Escape special characters for ReportLab
+        # 转义 ReportLab 的特殊字符
         text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-        # Bold text: **text** or __text__
+        # 粗体文本: **text** 或 __text__
         text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
         text = re.sub(r"__(.*?)__", r"<b>\1</b>", text)
 
-        # Italic text: *text* or _text_ (but not in the middle of words)
+        # 斜体文本: *text* 或 _text_ (但不在单词中间)
         text = re.sub(r"(?<!\w)\*([^*\n]+?)\*(?!\w)", r"<i>\1</i>", text)
         text = re.sub(r"(?<!\w)_([^_\n]+?)_(?!\w)", r"<i>\1</i>", text)
 
-        # Inline code: `code`
+        # 内联代码: `code`
         text = re.sub(
             r"`([^`]+?)`",
             r'<font name="Courier" size="9" color="darkred">\1</font>',
             text,
         )
 
-        # Links: [text](url) - convert to text with URL annotation
+        # 链接: [text](url) - 转换为带有 URL 注释的文本
         def link_replacer(match):
             link_text = match.group(1)
             url = match.group(2)
@@ -474,7 +474,7 @@ class Parser:
 
         text = re.sub(r"\[([^\]]+?)\]\(([^)]+?)\)", link_replacer, text)
 
-        # Strikethrough: ~~text~~
+        # 删除线: ~~text~~
         text = re.sub(r"~~(.*?)~~", r"<strike>\1</strike>", text)
 
         return text
@@ -488,18 +488,18 @@ class Parser:
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Abstract method to parse PDF document.
-        Must be implemented by subclasses.
+        解析 PDF 文档的抽象方法。
+        必须由子类实现。
 
         Args:
-            pdf_path: Path to the PDF file
-            output_dir: Output directory path
-            method: Parsing method (auto, txt, ocr)
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for parser-specific command
+            pdf_path: PDF 文件的路径
+            output_dir: 输出目录路径
+            method: 解析方法 (auto, txt, ocr)
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: 解析器特定命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         raise NotImplementedError("parse_pdf must be implemented by subclasses")
 
@@ -511,20 +511,20 @@ class Parser:
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Abstract method to parse image document.
-        Must be implemented by subclasses.
+        解析图像文档的抽象方法。
+        必须由子类实现。
 
-        Note: Different parsers may support different image formats.
-        Check the specific parser's documentation for supported formats.
+        注意: 不同的解析器可能支持不同的图像格式。
+        请查看特定解析器的文档以了解支持的格式。
 
         Args:
-            image_path: Path to the image file
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for parser-specific command
+            image_path: 图像文件的路径
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: 解析器特定命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         raise NotImplementedError("parse_image must be implemented by subclasses")
 
@@ -537,28 +537,28 @@ class Parser:
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Abstract method to parse a document.
-        Must be implemented by subclasses.
+        解析文档的抽象方法。
+        必须由子类实现。
 
         Args:
-            file_path: Path to the file to be parsed
-            method: Parsing method (auto, txt, ocr)
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for parser-specific command
+            file_path: 要解析的文件路径
+            method: 解析方法 (auto, txt, ocr)
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: 解析器特定命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         raise NotImplementedError("parse_document must be implemented by subclasses")
 
     def check_installation(self) -> bool:
         """
-        Abstract method to check if the parser is properly installed.
-        Must be implemented by subclasses.
+        检查解析器是否正确安装的抽象方法。
+        必须由子类实现。
 
         Returns:
-            bool: True if installation is valid, False otherwise
+            bool: 如果安装有效则为 True,否则为 False
         """
         raise NotImplementedError(
             "check_installation must be implemented by subclasses"
@@ -567,21 +567,21 @@ class Parser:
 
 class MineruParser(Parser):
     """
-    MinerU 2.0 document parsing utility class
+    MinerU 2.0 文档解析工具类
 
-    Supports parsing PDF and image documents, converting the content into structured data
-    and generating markdown and JSON output.
+    支持解析 PDF 和图像文档,将内容转换为结构化数据
+    并生成 markdown 和 JSON 输出。
 
-    Note: Office documents are no longer directly supported. Please convert them to PDF first.
+    注意: 不再直接支持 Office 文档。请先将它们转换为 PDF。
     """
 
     __slots__ = ()
 
-    # Class-level logger
+    # 类级别的日志记录器
     logger = logging.getLogger(__name__)
 
     def __init__(self) -> None:
-        """Initialize MineruParser"""
+        """初始化 MineruParser"""
         super().__init__()
 
     @staticmethod
@@ -600,21 +600,21 @@ class MineruParser(Parser):
         vlm_url: Optional[str] = None,
     ) -> None:
         """
-        Run mineru command line tool
+        运行 mineru 命令行工具
 
         Args:
-            input_path: Path to input file or directory
-            output_dir: Output directory path
-            method: Parsing method (auto, txt, ocr)
-            lang: Document language for OCR optimization
-            backend: Parsing backend
-            start_page: Starting page number (0-based)
-            end_page: Ending page number (0-based)
-            formula: Enable formula parsing
-            table: Enable table parsing
-            device: Inference device
-            source: Model source
-            vlm_url: When the backend is `vlm-sglang-client`, you need to specify the server_url
+            input_path: 输入文件或目录的路径
+            output_dir: 输出目录路径
+            method: 解析方法 (auto, txt, ocr)
+            lang: 用于 OCR 优化的文档语言
+            backend: 解析后端
+            start_page: 起始页码 (从0开始)
+            end_page: 结束页码 (从0开始)
+            formula: 启用公式解析
+            table: 启用表格解析
+            device: 推理设备
+            source: 模型源
+            vlm_url: 当后端为 `vlm-sglang-client` 时,需要指定 server_url
         """
         cmd = [
             "mineru",
@@ -649,12 +649,12 @@ class MineruParser(Parser):
         error_lines = []
 
         try:
-            # Prepare subprocess parameters to hide console window on Windows
+            # 准备子进程参数以在 Windows 上隐藏控制台窗口
             import platform
             import threading
             from queue import Queue, Empty
 
-            # Log the command being executed
+            # 记录正在执行的命令
             logging.info(f"Executing mineru command: {' '.join(cmd)}")
 
             subprocess_kwargs = {
@@ -663,31 +663,31 @@ class MineruParser(Parser):
                 "text": True,
                 "encoding": "utf-8",
                 "errors": "ignore",
-                "bufsize": 1,  # Line buffered
+                "bufsize": 1,  # 行缓冲
             }
 
-            # Hide console window on Windows
+            # 在 Windows 上隐藏控制台窗口
             if platform.system() == "Windows":
                 subprocess_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
-            # Function to read output from subprocess and add to queue
+            # 从子进程读取输出并添加到队列的函数
             def enqueue_output(pipe, queue, prefix):
                 try:
                     for line in iter(pipe.readline, ""):
-                        if line.strip():  # Only add non-empty lines
+                        if line.strip():  # 只添加非空行
                             queue.put((prefix, line.strip()))
                     pipe.close()
                 except Exception as e:
                     queue.put((prefix, f"Error reading {prefix}: {e}"))
 
-            # Start subprocess
+            # 启动子进程
             process = subprocess.Popen(cmd, **subprocess_kwargs)
 
-            # Create queues for stdout and stderr
+            # 为 stdout 和 stderr 创建队列
             stdout_queue = Queue()
             stderr_queue = Queue()
 
-            # Start threads to read output
+            # 启动线程读取输出
             stdout_thread = threading.Thread(
                 target=enqueue_output, args=(process.stdout, stdout_queue, "STDOUT")
             )
@@ -700,23 +700,23 @@ class MineruParser(Parser):
             stdout_thread.start()
             stderr_thread.start()
 
-            # Process output in real time
+            # 实时处理输出
             while process.poll() is None:
-                # Check stdout queue
+                # 检查 stdout 队列
                 try:
                     while True:
                         prefix, line = stdout_queue.get_nowait()
                         output_lines.append(line)
-                        # Log mineru output with INFO level, prefixed with [MinerU]
+                        # 以 INFO 级别记录 mineru 输出,前缀为 [MinerU]
                         logging.info(f"[MinerU] {line}")
                 except Empty:
                     pass
 
-                # Check stderr queue
+                # 检查 stderr 队列
                 try:
                     while True:
                         prefix, line = stderr_queue.get_nowait()
-                        # Log mineru errors with WARNING level
+                        # 以 WARNING 级别记录 mineru 错误
                         if "warning" in line.lower():
                             logging.warning(f"[MinerU] {line}")
                         elif "error" in line.lower():
@@ -728,12 +728,12 @@ class MineruParser(Parser):
                 except Empty:
                     pass
 
-                # Small delay to prevent busy waiting
+                # 小延迟以防止忙等待
                 import time
 
                 time.sleep(0.1)
 
-            # Process any remaining output after process completion
+            # 处理进程完成后的任何剩余输出
             try:
                 while True:
                     prefix, line = stdout_queue.get_nowait()
@@ -756,10 +756,10 @@ class MineruParser(Parser):
             except Empty:
                 pass
 
-            # Wait for process to complete and get return code
+            # 等待进程完成并获取返回码
             return_code = process.wait()
 
-            # Wait for threads to finish
+            # 等待线程完成
             stdout_thread.join(timeout=5)
             stderr_thread.join(timeout=5)
 
@@ -791,19 +791,19 @@ class MineruParser(Parser):
         output_dir: Path, file_stem: str, method: str = "auto"
     ) -> Tuple[List[Dict[str, Any]], str]:
         """
-        Read the output files generated by mineru
+        读取由 mineru 生成的输出文件
 
         Args:
-            output_dir: Output directory
-            file_stem: File name without extension
+            output_dir: 输出目录
+            file_stem: 不带扩展名的文件名
 
         Returns:
-            Tuple containing (content list JSON, Markdown text)
+            包含 (内容列表 JSON, Markdown 文本) 的元组
         """
-        # Look for the generated files
+        # 查找生成的文件
         md_file = output_dir / f"{file_stem}.md"
         json_file = output_dir / f"{file_stem}_content_list.json"
-        images_base_dir = output_dir  # Base directory for images
+        images_base_dir = output_dir  # 图像的基础目录
 
         file_stem_subdir = output_dir / file_stem
         if file_stem_subdir.exists():
@@ -811,7 +811,7 @@ class MineruParser(Parser):
             json_file = file_stem_subdir / method / f"{file_stem}_content_list.json"
             images_base_dir = file_stem_subdir / method
 
-        # Read markdown content
+        # 读取 markdown 内容
         md_content = ""
         if md_file.exists():
             try:
@@ -820,14 +820,14 @@ class MineruParser(Parser):
             except Exception as e:
                 logging.warning(f"Could not read markdown file {md_file}: {e}")
 
-        # Read JSON content list
+        # 读取 JSON 内容列表
         content_list = []
         if json_file.exists():
             try:
                 with open(json_file, "r", encoding="utf-8") as f:
                     content_list = json.load(f)
 
-                # Always fix relative paths in content_list to absolute paths
+                # 始终将 content_list 中的相对路径修正为绝对路径
                 logging.info(
                     f"Fixing image paths in {json_file} with base directory: {images_base_dir}"
                 )
@@ -862,27 +862,27 @@ class MineruParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse PDF document using MinerU 2.0
+        使用 MinerU 2.0 解析 PDF 文档
 
         Args:
-            pdf_path: Path to the PDF file
-            output_dir: Output directory path
-            method: Parsing method (auto, txt, ocr)
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for mineru command
+            pdf_path: PDF 文件的路径
+            output_dir: 输出目录路径
+            method: 解析方法 (auto, txt, ocr)
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: mineru 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert to Path object for easier handling
+            # 转换为 Path 对象以便于处理
             pdf_path = Path(pdf_path)
             if not pdf_path.exists():
                 raise FileNotFoundError(f"PDF file does not exist: {pdf_path}")
 
             name_without_suff = pdf_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -890,7 +890,7 @@ class MineruParser(Parser):
 
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Run mineru command
+            # 运行 mineru 命令
             self._run_mineru_command(
                 input_path=pdf_path,
                 output_dir=base_output_dir,
@@ -899,7 +899,7 @@ class MineruParser(Parser):
                 **kwargs,
             )
 
-            # Read the generated output files
+            # 读取生成的输出文件
             backend = kwargs.get("backend", "")
             if backend.startswith("vlm-"):
                 method = "vlm"
@@ -923,30 +923,30 @@ class MineruParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse image document using MinerU 2.0
+        使用 MinerU 2.0 解析图像文档
 
-        Note: MinerU 2.0 natively supports .png, .jpeg, .jpg formats.
-        Other formats (.bmp, .tiff, .tif, etc.) will be automatically converted to .png.
+        注意: MinerU 2.0 原生支持 .png, .jpeg, .jpg 格式。
+        其他格式 (.bmp, .tiff, .tif 等) 将自动转换为 .png。
 
         Args:
-            image_path: Path to the image file
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for mineru command
+            image_path: 图像文件的路径
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: mineru 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert to Path object for easier handling
+            # 转换为 Path 对象以便于处理
             image_path = Path(image_path)
             if not image_path.exists():
                 raise FileNotFoundError(f"Image file does not exist: {image_path}")
 
-            # Supported image formats by MinerU 2.0
+            # MinerU 2.0 支持的图像格式
             mineru_supported_formats = {".png", ".jpeg", ".jpg"}
 
-            # All supported image formats (including those we can convert)
+            # 所有支持的图像格式 (包括我们可以转换的格式)
             all_supported_formats = {
                 ".png",
                 ".jpeg",
@@ -964,11 +964,11 @@ class MineruParser(Parser):
                     f"Unsupported image format: {ext}. Supported formats: {', '.join(all_supported_formats)}"
                 )
 
-            # Determine the actual image file to process
+            # 确定要处理的实际图像文件
             actual_image_path = image_path
             temp_converted_file = None
 
-            # If format is not natively supported by MinerU, convert it
+            # 如果格式不是 MinerU 原生支持的,则进行转换
             if ext not in mineru_supported_formats:
                 logging.info(
                     f"Converting {ext} image to PNG for MinerU compatibility..."
@@ -982,33 +982,33 @@ class MineruParser(Parser):
                         "Please install it using: pip install Pillow"
                     )
 
-                # Create temporary directory for conversion
+                # 为转换创建临时目录
                 temp_dir = Path(tempfile.mkdtemp())
                 temp_converted_file = temp_dir / f"{image_path.stem}_converted.png"
 
                 try:
-                    # Open and convert image
+                    # 打开并转换图像
                     with Image.open(image_path) as img:
-                        # Handle different image modes
+                        # 处理不同的图像模式
                         if img.mode in ("RGBA", "LA", "P"):
-                            # For images with transparency or palette, convert to RGB first
+                            # 对于带有透明度或调色板的图像,首先转换为 RGB
                             if img.mode == "P":
                                 img = img.convert("RGBA")
 
-                            # Create white background for transparent images
+                            # 为透明图像创建白色背景
                             background = Image.new("RGB", img.size, (255, 255, 255))
                             if img.mode == "RGBA":
                                 background.paste(
                                     img, mask=img.split()[-1]
-                                )  # Use alpha channel as mask
+                                )  # 使用 alpha 通道作为遮罩
                             else:
                                 background.paste(img)
                             img = background
                         elif img.mode not in ("RGB", "L"):
-                            # Convert other modes to RGB
+                            # 将其他模式转换为 RGB
                             img = img.convert("RGB")
 
-                        # Save as PNG
+                        # 保存为 PNG
                         img.save(temp_converted_file, "PNG", optimize=True)
                         logging.info(
                             f"Successfully converted {image_path.name} to PNG ({temp_converted_file.stat().st_size / 1024:.1f} KB)"
@@ -1025,7 +1025,7 @@ class MineruParser(Parser):
 
             name_without_suff = image_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -1034,16 +1034,16 @@ class MineruParser(Parser):
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
             try:
-                # Run mineru command (images are processed with OCR method)
+                # 运行 mineru 命令 (图像使用 OCR 方法处理)
                 self._run_mineru_command(
                     input_path=actual_image_path,
                     output_dir=base_output_dir,
-                    method="ocr",  # Images require OCR method
+                    method="ocr",  # 图像需要 OCR 方法
                     lang=lang,
                     **kwargs,
                 )
 
-                # Read the generated output files
+                # 读取生成的输出文件
                 content_list, _ = self._read_output_files(
                     base_output_dir, name_without_suff, method="ocr"
                 )
@@ -1053,13 +1053,13 @@ class MineruParser(Parser):
                 raise
 
             finally:
-                # Clean up temporary converted file if it was created
+                # 如果创建了临时转换文件,则清理
                 if temp_converted_file and temp_converted_file.exists():
                     try:
                         temp_converted_file.unlink()
-                        temp_converted_file.parent.rmdir()  # Remove temp directory if empty
+                        temp_converted_file.parent.rmdir()  # 如果为空则删除临时目录
                     except Exception:
-                        pass  # Ignore cleanup errors
+                        pass  # 忽略清理错误
 
         except Exception as e:
             logging.error(f"Error in parse_image: {str(e)}")
@@ -1073,27 +1073,27 @@ class MineruParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse office document by first converting to PDF, then parsing with MinerU 2.0
+        通过先转换为 PDF,然后使用 MinerU 2.0 解析的方式解析 Office 文档
 
-        Note: This method requires LibreOffice to be installed separately for PDF conversion.
-        MinerU 2.0 no longer includes built-in Office document conversion.
+        注意: 此方法需要单独安装 LibreOffice 以进行 PDF 转换。
+        MinerU 2.0 不再包含内置的 Office 文档转换功能。
 
-        Supported formats: .doc, .docx, .ppt, .pptx, .xls, .xlsx
+        支持的格式: .doc, .docx, .ppt, .pptx, .xls, .xlsx
 
         Args:
-            doc_path: Path to the document file (.doc, .docx, .ppt, .pptx, .xls, .xlsx)
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for mineru command
+            doc_path: 文档文件的路径 (.doc, .docx, .ppt, .pptx, .xls, .xlsx)
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: mineru 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert Office document to PDF using base class method
+            # 使用基类方法将 Office 文档转换为 PDF
             pdf_path = self.convert_office_to_pdf(doc_path, output_dir)
 
-            # Parse the converted PDF
+            # 解析转换后的 PDF
             return self.parse_pdf(
                 pdf_path=pdf_path, output_dir=output_dir, lang=lang, **kwargs
             )
@@ -1110,24 +1110,24 @@ class MineruParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse text file by first converting to PDF, then parsing with MinerU 2.0
+        通过先转换为 PDF,然后使用 MinerU 2.0 解析的方式解析文本文件
 
-        Supported formats: .txt, .md
+        支持的格式: .txt, .md
 
         Args:
-            text_path: Path to the text file (.txt, .md)
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for mineru command
+            text_path: 文本文件的路径 (.txt, .md)
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: mineru 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert text file to PDF using base class method
+            # 使用基类方法将文本文件转换为 PDF
             pdf_path = self.convert_text_to_pdf(text_path, output_dir)
 
-            # Parse the converted PDF
+            # 解析转换后的 PDF
             return self.parse_pdf(
                 pdf_path=pdf_path, output_dir=output_dir, lang=lang, **kwargs
             )
@@ -1145,27 +1145,27 @@ class MineruParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse document using MinerU 2.0 based on file extension
+        根据文件扩展名使用 MinerU 2.0 解析文档
 
         Args:
-            file_path: Path to the file to be parsed
-            method: Parsing method (auto, txt, ocr)
-            output_dir: Output directory path
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for mineru command
+            file_path: 要解析的文件路径
+            method: 解析方法 (auto, txt, ocr)
+            output_dir: 输出目录路径
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: mineru 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
-        # Convert to Path object
+        # 转换为 Path 对象
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
 
-        # Get file extension
+        # 获取文件扩展名
         ext = file_path.suffix.lower()
 
-        # Choose appropriate parser based on file type
+        # 根据文件类型选择适当的解析器
         if ext == ".pdf":
             return self.parse_pdf(file_path, output_dir, method, lang, **kwargs)
         elif ext in self.IMAGE_FORMATS:
@@ -1179,7 +1179,7 @@ class MineruParser(Parser):
         elif ext in self.TEXT_FORMATS:
             return self.parse_text_file(file_path, output_dir, lang, **kwargs)
         else:
-            # For unsupported file types, try as PDF
+            # 对于不支持的文件类型,尝试作为 PDF 解析
             logging.warning(
                 f"Warning: Unsupported file extension '{ext}', "
                 f"attempting to parse as PDF"
@@ -1188,13 +1188,13 @@ class MineruParser(Parser):
 
     def check_installation(self) -> bool:
         """
-        Check if MinerU 2.0 is properly installed
+        检查 MinerU 2.0 是否正确安装
 
         Returns:
-            bool: True if installation is valid, False otherwise
+            bool: 如果安装有效则为 True,否则为 False
         """
         try:
-            # Prepare subprocess parameters to hide console window on Windows
+            # 准备子进程参数以在 Windows 上隐藏控制台窗口
             import platform
 
             subprocess_kwargs = {
@@ -1205,7 +1205,7 @@ class MineruParser(Parser):
                 "errors": "ignore",
             }
 
-            # Hide console window on Windows
+            # 在 Windows 上隐藏控制台窗口
             if platform.system() == "Windows":
                 subprocess_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
@@ -1222,17 +1222,17 @@ class MineruParser(Parser):
 
 class DoclingParser(Parser):
     """
-    Docling document parsing utility class.
+    Docling 文档解析工具类。
 
-    Specialized in parsing Office documents and HTML files, converting the content
-    into structured data and generating markdown and JSON output.
+    专门用于解析 Office 文档和 HTML 文件,将内容转换为结构化数据
+    并生成 markdown 和 JSON 输出。
     """
 
-    # Define Docling-specific formats
+    # 定义 Docling 特定的格式
     HTML_FORMATS = {".html", ".htm", ".xhtml"}
 
     def __init__(self) -> None:
-        """Initialize DoclingParser"""
+        """初始化 DoclingParser"""
         super().__init__()
 
     def parse_pdf(
@@ -1244,27 +1244,27 @@ class DoclingParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse PDF document using Docling
+        使用 Docling 解析 PDF 文档
 
         Args:
-            pdf_path: Path to the PDF file
-            output_dir: Output directory path
-            method: Parsing method (auto, txt, ocr)
-            lang: Document language for OCR optimization
-            **kwargs: Additional parameters for docling command
+            pdf_path: PDF 文件的路径
+            output_dir: 输出目录路径
+            method: 解析方法 (auto, txt, ocr)
+            lang: 用于 OCR 优化的文档语言
+            **kwargs: docling 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert to Path object for easier handling
+            # 转换为 Path 对象以便于处理
             pdf_path = Path(pdf_path)
             if not pdf_path.exists():
                 raise FileNotFoundError(f"PDF file does not exist: {pdf_path}")
 
             name_without_suff = pdf_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -1272,7 +1272,7 @@ class DoclingParser(Parser):
 
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Run docling command
+            # 运行 docling 命令
             self._run_docling_command(
                 input_path=pdf_path,
                 output_dir=base_output_dir,
@@ -1280,7 +1280,7 @@ class DoclingParser(Parser):
                 **kwargs,
             )
 
-            # Read the generated output files
+            # 读取生成的输出文件
             content_list, _ = self._read_output_files(
                 base_output_dir, name_without_suff
             )
@@ -1299,27 +1299,27 @@ class DoclingParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse document using Docling based on file extension
+        根据文件扩展名使用 Docling 解析文档
 
         Args:
-            file_path: Path to the file to be parsed
-            method: Parsing method
-            output_dir: Output directory path
-            lang: Document language for optimization
-            **kwargs: Additional parameters for docling command
+            file_path: 要解析的文件路径
+            method: 解析方法
+            output_dir: 输出目录路径
+            lang: 用于优化的文档语言
+            **kwargs: docling 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
-        # Convert to Path object
+        # 转换为 Path 对象
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
 
-        # Get file extension
+        # 获取文件扩展名
         ext = file_path.suffix.lower()
 
-        # Choose appropriate parser based on file type
+        # 根据文件类型选择适当的解析器
         if ext == ".pdf":
             return self.parse_pdf(file_path, output_dir, method, lang, **kwargs)
         elif ext in self.OFFICE_FORMATS:
@@ -1341,15 +1341,15 @@ class DoclingParser(Parser):
         **kwargs,
     ) -> None:
         """
-        Run docling command line tool
+        运行 docling 命令行工具
 
         Args:
-            input_path: Path to input file or directory
-            output_dir: Output directory path
-            file_stem: File stem for creating subdirectory
-            **kwargs: Additional parameters for docling command
+            input_path: 输入文件或目录的路径
+            output_dir: 输出目录路径
+            file_stem: 用于创建子目录的文件名(不含扩展名)
+            **kwargs: docling 命令的附加参数
         """
-        # Create subdirectory structure similar to MinerU
+        # 创建类似于 MinerU 的子目录结构
         file_output_dir = Path(output_dir) / file_stem / "docling"
         file_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1371,7 +1371,7 @@ class DoclingParser(Parser):
         ]
 
         try:
-            # Prepare subprocess parameters to hide console window on Windows
+            # 准备子进程参数以在 Windows 上隐藏控制台窗口
             import platform
 
             docling_subprocess_kwargs = {
@@ -1382,7 +1382,7 @@ class DoclingParser(Parser):
                 "errors": "ignore",
             }
 
-            # Hide console window on Windows
+            # 在 Windows 上隐藏控制台窗口
             if platform.system() == "Windows":
                 docling_subprocess_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
@@ -1409,21 +1409,21 @@ class DoclingParser(Parser):
         file_stem: str,
     ) -> Tuple[List[Dict[str, Any]], str]:
         """
-        Read the output files generated by docling and convert to MinerU format
+        读取由 docling 生成的输出文件并转换为 MinerU 格式
 
         Args:
-            output_dir: Output directory
-            file_stem: File name without extension
+            output_dir: 输出目录
+            file_stem: 不带扩展名的文件名
 
         Returns:
-            Tuple containing (content list JSON, Markdown text)
+            包含 (内容列表 JSON, Markdown 文本) 的元组
         """
-        # Use subdirectory structure similar to MinerU
+        # 使用类似于 MinerU 的子目录结构
         file_subdir = output_dir / file_stem / "docling"
         md_file = file_subdir / f"{file_stem}.md"
         json_file = file_subdir / f"{file_stem}.json"
 
-        # Read markdown content
+        # 读取 markdown 内容
         md_content = ""
         if md_file.exists():
             try:
@@ -1432,13 +1432,13 @@ class DoclingParser(Parser):
             except Exception as e:
                 logging.warning(f"Could not read markdown file {md_file}: {e}")
 
-        # Read JSON content and convert format
+        # 读取 JSON 内容并转换格式
         content_list = []
         if json_file.exists():
             try:
                 with open(json_file, "r", encoding="utf-8") as f:
                     docling_content = json.load(f)
-                    # Convert docling format to minerU format
+                    # 将 docling 格式转换为 minerU 格式
                     content_list = self.read_from_block_recursive(
                         docling_content["body"],
                         "body",
@@ -1557,21 +1557,21 @@ class DoclingParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse office document directly using Docling
+        直接使用 Docling 解析 Office 文档
 
-        Supported formats: .doc, .docx, .ppt, .pptx, .xls, .xlsx
+        支持的格式: .doc, .docx, .ppt, .pptx, .xls, .xlsx
 
         Args:
-            doc_path: Path to the document file
-            output_dir: Output directory path
-            lang: Document language for optimization
-            **kwargs: Additional parameters for docling command
+            doc_path: 文档文件的路径
+            output_dir: 输出目录路径
+            lang: 用于优化的文档语言
+            **kwargs: docling 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert to Path object
+            # 转换为 Path 对象
             doc_path = Path(doc_path)
             if not doc_path.exists():
                 raise FileNotFoundError(f"Document file does not exist: {doc_path}")
@@ -1581,7 +1581,7 @@ class DoclingParser(Parser):
 
             name_without_suff = doc_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -1589,7 +1589,7 @@ class DoclingParser(Parser):
 
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Run docling command
+            # 运行 docling 命令
             self._run_docling_command(
                 input_path=doc_path,
                 output_dir=base_output_dir,
@@ -1597,7 +1597,7 @@ class DoclingParser(Parser):
                 **kwargs,
             )
 
-            # Read the generated output files
+            # 读取生成的输出文件
             content_list, _ = self._read_output_files(
                 base_output_dir, name_without_suff
             )
@@ -1615,21 +1615,21 @@ class DoclingParser(Parser):
         **kwargs,
     ) -> List[Dict[str, Any]]:
         """
-        Parse HTML document using Docling
+        使用 Docling 解析 HTML 文档
 
-        Supported formats: .html, .htm, .xhtml
+        支持的格式: .html, .htm, .xhtml
 
         Args:
-            html_path: Path to the HTML file
-            output_dir: Output directory path
-            lang: Document language for optimization
-            **kwargs: Additional parameters for docling command
+            html_path: HTML 文件的路径
+            output_dir: 输出目录路径
+            lang: 用于优化的文档语言
+            **kwargs: docling 命令的附加参数
 
         Returns:
-            List[Dict[str, Any]]: List of content blocks
+            List[Dict[str, Any]]: 内容块列表
         """
         try:
-            # Convert to Path object
+            # 转换为 Path 对象
             html_path = Path(html_path)
             if not html_path.exists():
                 raise FileNotFoundError(f"HTML file does not exist: {html_path}")
@@ -1639,7 +1639,7 @@ class DoclingParser(Parser):
 
             name_without_suff = html_path.stem
 
-            # Prepare output directory
+            # 准备输出目录
             if output_dir:
                 base_output_dir = Path(output_dir)
             else:
@@ -1647,7 +1647,7 @@ class DoclingParser(Parser):
 
             base_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Run docling command
+            # 运行 docling 命令
             self._run_docling_command(
                 input_path=html_path,
                 output_dir=base_output_dir,
@@ -1655,7 +1655,7 @@ class DoclingParser(Parser):
                 **kwargs,
             )
 
-            # Read the generated output files
+            # 读取生成的输出文件
             content_list, _ = self._read_output_files(
                 base_output_dir, name_without_suff
             )
@@ -1667,13 +1667,13 @@ class DoclingParser(Parser):
 
     def check_installation(self) -> bool:
         """
-        Check if Docling is properly installed
+        检查 Docling 是否正确安装
 
         Returns:
-            bool: True if installation is valid, False otherwise
+            bool: 如果安装有效则为 True,否则为 False
         """
         try:
-            # Prepare subprocess parameters to hide console window on Windows
+            # 准备子进程参数以在 Windows 上隐藏控制台窗口
             import platform
 
             subprocess_kwargs = {
@@ -1684,7 +1684,7 @@ class DoclingParser(Parser):
                 "errors": "ignore",
             }
 
-            # Hide console window on Windows
+            # 在 Windows 上隐藏控制台窗口
             if platform.system() == "Windows":
                 subprocess_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
@@ -1701,24 +1701,24 @@ class DoclingParser(Parser):
 
 def main():
     """
-    Main function to run the document parser from command line
+    从命令行运行文档解析器的主函数
     """
     parser = argparse.ArgumentParser(
-        description="Parse documents using MinerU 2.0 or Docling"
+        description="使用 MinerU 2.0 或 Docling 解析文档"
     )
-    parser.add_argument("file_path", help="Path to the document to parse")
-    parser.add_argument("--output", "-o", help="Output directory path")
+    parser.add_argument("file_path", help="要解析的文档路径")
+    parser.add_argument("--output", "-o", help="输出目录路径")
     parser.add_argument(
         "--method",
         "-m",
         choices=["auto", "txt", "ocr"],
         default="auto",
-        help="Parsing method (auto, txt, ocr)",
+        help="解析方法 (auto, txt, ocr)",
     )
     parser.add_argument(
         "--lang",
         "-l",
-        help="Document language for OCR optimization (e.g., ch, en, ja)",
+        help="用于 OCR 优化的文档语言 (例如: ch, en, ja)",
     )
     parser.add_argument(
         "--backend",
@@ -1730,51 +1730,51 @@ def main():
             "vlm-sglang-client",
         ],
         default="pipeline",
-        help="Parsing backend",
+        help="解析后端",
     )
     parser.add_argument(
         "--device",
         "-d",
-        help="Inference device (e.g., cpu, cuda, cuda:0, npu, mps)",
+        help="推理设备 (例如: cpu, cuda, cuda:0, npu, mps)",
     )
     parser.add_argument(
         "--source",
         choices=["huggingface", "modelscope", "local"],
         default="huggingface",
-        help="Model source",
+        help="模型源",
     )
     parser.add_argument(
         "--no-formula",
         action="store_true",
-        help="Disable formula parsing",
+        help="禁用公式解析",
     )
     parser.add_argument(
         "--no-table",
         action="store_true",
-        help="Disable table parsing",
+        help="禁用表格解析",
     )
     parser.add_argument(
-        "--stats", action="store_true", help="Display content statistics"
+        "--stats", action="store_true", help="显示内容统计信息"
     )
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Check parser installation",
+        help="检查解析器安装",
     )
     parser.add_argument(
         "--parser",
         choices=["mineru", "docling"],
         default="mineru",
-        help="Parser selection",
+        help="解析器选择",
     )
     parser.add_argument(
         "--vlm_url",
-        help="When the backend is `vlm-sglang-client`, you need to specify the server_url, for example:`http://127.0.0.1:30000`",
+        help="当后端为 `vlm-sglang-client` 时,需要指定 server_url,例如: `http://127.0.0.1:30000`",
     )
 
     args = parser.parse_args()
 
-    # Check installation if requested
+    # 如果请求,检查安装
     if args.check:
         doc_parser = DoclingParser() if args.parser == "docling" else MineruParser()
         if doc_parser.check_installation():
@@ -1785,7 +1785,7 @@ def main():
             return 1
 
     try:
-        # Parse the document
+        # 解析文档
         doc_parser = DoclingParser() if args.parser == "docling" else MineruParser()
         content_list = doc_parser.parse_document(
             file_path=args.file_path,
@@ -1803,12 +1803,12 @@ def main():
         print(f"✅ Successfully parsed: {args.file_path}")
         print(f"📊 Extracted {len(content_list)} content blocks")
 
-        # Display statistics if requested
+        # 如果请求,显示统计信息
         if args.stats:
             print("\n📈 Document Statistics:")
             print(f"Total content blocks: {len(content_list)}")
 
-            # Count different types of content
+            # 统计不同类型的内容
             content_types = {}
             for item in content_list:
                 if isinstance(item, dict):
