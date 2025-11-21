@@ -1,7 +1,7 @@
 """
-Query functionality for RAGAnything
+RAGAnything 查询功能
 
-Contains all query-related methods for both text and multimodal queries
+包含文本和多模态查询的所有查询相关方法
 """
 
 import json
@@ -20,44 +20,44 @@ from raganything.utils import (
 
 
 class QueryMixin:
-    """QueryMixin class containing query functionality for RAGAnything"""
+    """包含 RAGAnything 查询功能的 QueryMixin 类"""
 
     def _generate_multimodal_cache_key(
         self, query: str, multimodal_content: List[Dict[str, Any]], mode: str, **kwargs
     ) -> str:
         """
-        Generate cache key for multimodal query
+        为多模态查询生成缓存键
 
         Args:
-            query: Base query text
-            multimodal_content: List of multimodal content
-            mode: Query mode
-            **kwargs: Additional parameters
+            query: 基础查询文本
+            multimodal_content: 多模态内容列表
+            mode: 查询模式
+            **kwargs: 额外参数
 
         Returns:
-            str: Cache key hash
+            str: 缓存键哈希值
         """
-        # Create a normalized representation of the query parameters
+        # 创建查询参数的标准化表示
         cache_data = {
             "query": query.strip(),
             "mode": mode,
         }
 
-        # Normalize multimodal content for stable caching
+        # 标准化多模态内容以实现稳定的缓存
         normalized_content = []
         if multimodal_content:
             for item in multimodal_content:
                 if isinstance(item, dict):
                     normalized_item = {}
                     for key, value in item.items():
-                        # For file paths, use basename to make cache more portable
+                        # 对于文件路径，使用基础名称使缓存更具可移植性
                         if key in [
                             "img_path",
                             "image_path",
                             "file_path",
                         ] and isinstance(value, str):
                             normalized_item[key] = Path(value).name
-                        # For large content, create a hash instead of storing directly
+                        # 对于大型内容，创建哈希值而不是直接存储
                         elif (
                             key in ["table_data", "table_body"]
                             and isinstance(value, str)
@@ -74,7 +74,7 @@ class QueryMixin:
 
         cache_data["multimodal_content"] = normalized_content
 
-        # Add relevant kwargs to cache data
+        # 将相关的 kwargs 添加到缓存数据
         relevant_kwargs = {
             k: v
             for k, v in kwargs.items()
@@ -91,7 +91,7 @@ class QueryMixin:
         }
         cache_data.update(relevant_kwargs)
 
-        # Generate hash from the cache data
+        # 从缓存数据生成哈希值
         cache_str = json.dumps(cache_data, sort_keys=True, ensure_ascii=False)
         cache_hash = hashlib.md5(cache_str.encode()).hexdigest()
 
@@ -99,35 +99,35 @@ class QueryMixin:
 
     async def aquery(self, query: str, mode: str = "mix", **kwargs) -> str:
         """
-        Pure text query - directly calls LightRAG's query functionality
+        纯文本查询 - 直接调用 LightRAG 的查询功能
 
         Args:
-            query: Query text
-            mode: Query mode ("local", "global", "hybrid", "naive", "mix", "bypass")
-            **kwargs: Other query parameters, will be passed to QueryParam
-                - vlm_enhanced: bool, default True when vision_model_func is available.
-                  If True, will parse image paths in retrieved context and replace them
-                  with base64 encoded images for VLM processing.
+            query: 查询文本
+            mode: 查询模式（"local"、"global"、"hybrid"、"naive"、"mix"、"bypass"）
+            **kwargs: 其他查询参数，将传递给 QueryParam
+                - vlm_enhanced: bool，当 vision_model_func 可用时默认为 True。
+                  如果为 True，将解析检索上下文中的图像路径并将其替换为
+                  base64 编码的图像以供 VLM 处理。
 
         Returns:
-            str: Query result
+            str: 查询结果
         """
         if self.lightrag is None:
             raise ValueError(
                 "No LightRAG instance available. Please process documents first or provide a pre-initialized LightRAG instance."
             )
 
-        # Check if VLM enhanced query should be used
+        # 检查是否应使用 VLM 增强查询
         vlm_enhanced = kwargs.pop("vlm_enhanced", None)
 
-        # Auto-determine VLM enhanced based on availability
+        # 根据可用性自动确定 VLM 增强
         if vlm_enhanced is None:
             vlm_enhanced = (
                 hasattr(self, "vision_model_func")
                 and self.vision_model_func is not None
             )
 
-        # Use VLM enhanced query if enabled and available
+        # 如果启用且可用，使用 VLM 增强查询
         if (
             vlm_enhanced
             and hasattr(self, "vision_model_func")
@@ -141,13 +141,13 @@ class QueryMixin:
                 "VLM enhanced query requested but vision_model_func is not available, falling back to normal query"
             )
 
-        # Create query parameters
+        # 创建查询参数
         query_param = QueryParam(mode=mode, **kwargs)
 
         self.logger.info(f"Executing text query: {query[:100]}...")
         self.logger.info(f"Query mode: {mode}")
 
-        # Call LightRAG's query method
+        # 调用 LightRAG 的查询方法
         result = await self.lightrag.aquery(query, param=query_param)
 
         self.logger.info("Text query completed")
@@ -161,24 +161,24 @@ class QueryMixin:
         **kwargs,
     ) -> str:
         """
-        Multimodal query - combines text and multimodal content for querying
+        多模态查询 - 结合文本和多模态内容进行查询
 
         Args:
-            query: Base query text
-            multimodal_content: List of multimodal content, each element contains:
-                - type: Content type ("image", "table", "equation", etc.)
-                - Other fields depend on type (e.g., img_path, table_data, latex, etc.)
-            mode: Query mode ("local", "global", "hybrid", "naive", "mix", "bypass")
-            **kwargs: Other query parameters, will be passed to QueryParam
+            query: 基础查询文本
+            multimodal_content: 多模态内容列表，每个元素包含：
+                - type: 内容类型（"image"、"table"、"equation" 等）
+                - 其他字段取决于类型（例如 img_path、table_data、latex 等）
+            mode: 查询模式（"local"、"global"、"hybrid"、"naive"、"mix"、"bypass"）
+            **kwargs: 其他查询参数，将传递给 QueryParam
 
         Returns:
-            str: Query result
+            str: 查询结果
 
         Examples:
-            # Pure text query
+            # 纯文本查询
             result = await rag.query_with_multimodal("What is machine learning?")
 
-            # Image query
+            # 图像查询
             result = await rag.query_with_multimodal(
                 "Analyze the content in this image",
                 multimodal_content=[{
@@ -187,7 +187,7 @@ class QueryMixin:
                 }]
             )
 
-            # Table query
+            # 表格查询
             result = await rag.query_with_multimodal(
                 "Analyze the data trends in this table",
                 multimodal_content=[{
@@ -196,23 +196,23 @@ class QueryMixin:
                 }]
             )
         """
-        # Ensure LightRAG is initialized
+        # 确保 LightRAG 已初始化
         await self._ensure_lightrag_initialized()
 
         self.logger.info(f"Executing multimodal query: {query[:100]}...")
         self.logger.info(f"Query mode: {mode}")
 
-        # If no multimodal content, fallback to pure text query
+        # 如果没有多模态内容，回退到纯文本查询
         if not multimodal_content:
             self.logger.info("No multimodal content provided, executing text query")
             return await self.aquery(query, mode=mode, **kwargs)
 
-        # Generate cache key for multimodal query
+        # 为多模态查询生成缓存键
         cache_key = self._generate_multimodal_cache_key(
             query, multimodal_content, mode, **kwargs
         )
 
-        # Check cache if available and enabled
+        # 如果可用且已启用，检查缓存
         cached_result = None
         if (
             hasattr(self, "lightrag")
@@ -237,7 +237,7 @@ class QueryMixin:
                 except Exception as e:
                     self.logger.debug(f"Error accessing multimodal query cache: {e}")
 
-        # Process multimodal content to generate enhanced query text
+        # 处理多模态内容以生成增强查询文本
         enhanced_query = await self._process_multimodal_query_content(
             query, multimodal_content
         )
@@ -246,10 +246,10 @@ class QueryMixin:
             f"Generated enhanced query length: {len(enhanced_query)} characters"
         )
 
-        # Execute enhanced query
+        # 执行增强查询
         result = await self.aquery(enhanced_query, mode=mode, **kwargs)
 
-        # Save to cache if available and enabled
+        # 如果可用且已启用，保存到缓存
         if (
             hasattr(self, "lightrag")
             and self.lightrag
@@ -278,7 +278,7 @@ class QueryMixin:
                 except Exception as e:
                     self.logger.debug(f"Error saving multimodal query to cache: {e}")
 
-        # Ensure cache is persisted to disk
+        # 确保缓存持久化到磁盘
         if (
             hasattr(self, "lightrag")
             and self.lightrag
@@ -295,39 +295,39 @@ class QueryMixin:
 
     async def aquery_vlm_enhanced(self, query: str, mode: str = "mix", **kwargs) -> str:
         """
-        VLM enhanced query - replaces image paths in retrieved context with base64 encoded images for VLM processing
+        VLM 增强查询 - 将检索上下文中的图像路径替换为 base64 编码的图像以供 VLM 处理
 
         Args:
-            query: User query
-            mode: Underlying LightRAG query mode
-            **kwargs: Other query parameters
+            query: 用户查询
+            mode: 底层 LightRAG 查询模式
+            **kwargs: 其他查询参数
 
         Returns:
-            str: VLM query result
+            str: VLM 查询结果
         """
-        # Ensure VLM is available
+        # 确保 VLM 可用
         if not hasattr(self, "vision_model_func") or not self.vision_model_func:
             raise ValueError(
                 "VLM enhanced query requires vision_model_func. "
                 "Please provide a vision model function when initializing RAGAnything."
             )
 
-        # Ensure LightRAG is initialized
+        # 确保 LightRAG 已初始化
         await self._ensure_lightrag_initialized()
 
         self.logger.info(f"Executing VLM enhanced query: {query[:100]}...")
 
-        # Clear previous image cache
+        # 清除之前的图像缓存
         if hasattr(self, "_current_images_base64"):
             delattr(self, "_current_images_base64")
 
-        # 1. Get original retrieval prompt (without generating final answer)
+        # 1. 获取原始检索提示（不生成最终答案）
         query_param = QueryParam(mode=mode, only_need_prompt=True, **kwargs)
         raw_prompt = await self.lightrag.aquery(query, param=query_param)
 
         self.logger.debug("Retrieved raw prompt from LightRAG")
 
-        # 2. Extract and process image paths
+        # 2. 提取和处理图像路径
         enhanced_prompt, images_found = await self._process_image_paths_for_vlm(
             raw_prompt
         )

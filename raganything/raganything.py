@@ -1,10 +1,10 @@
 """
-Complete document parsing + multimodal content insertion Pipeline
+完整的文档解析 + 多模态内容插入管道
 
-This script integrates:
-1. Document parsing (using configurable parsers)
-2. Pure text content LightRAG insertion
-3. Specialized processing for multimodal content (using different processors)
+此脚本集成了：
+1. 文档解析（使用可配置的解析器）
+2. 纯文本内容 LightRAG 插入
+3. 多模态内容的专门处理（使用不同的处理器）
 """
 
 import os
@@ -16,12 +16,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Add project root directory to Python path
+# 将项目根目录添加到 Python 路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Load environment variables from .env file BEFORE importing LightRAG
-# This is critical for TIKTOKEN_CACHE_DIR to work properly in offline environments
-# The OS environment variables take precedence over the .env file
+# 在导入 LightRAG 之前从 .env 文件加载环境变量
+# 这对于 TIKTOKEN_CACHE_DIR 在离线环境中正常工作至关重要
+# 操作系统环境变量优先于 .env 文件
 load_dotenv(dotenv_path=".env", override=False)
 
 from lightrag import LightRAG
@@ -48,80 +48,80 @@ from raganything.modalprocessors import (
 
 @dataclass
 class RAGAnything(QueryMixin, ProcessorMixin, BatchMixin):
-    """Multimodal Document Processing Pipeline - Complete document parsing and insertion pipeline"""
+    """多模态文档处理管道 - 完整的文档解析和插入管道"""
 
-    # Core Components
+    # 核心组件
     # ---
     lightrag: Optional[LightRAG] = field(default=None)
-    """Optional pre-initialized LightRAG instance."""
+    """可选的预初始化 LightRAG 实例。"""
 
     llm_model_func: Optional[Callable] = field(default=None)
-    """LLM model function for text analysis."""
+    """用于文本分析的 LLM 模型函数。"""
 
     vision_model_func: Optional[Callable] = field(default=None)
-    """Vision model function for image analysis."""
+    """用于图像分析的视觉模型函数。"""
 
     embedding_func: Optional[Callable] = field(default=None)
-    """Embedding function for text vectorization."""
+    """用于文本向量化的嵌入函数。"""
 
     config: Optional[RAGAnythingConfig] = field(default=None)
-    """Configuration object, if None will create with environment variables."""
+    """配置对象，如果为 None 将使用环境变量创建。"""
 
-    # LightRAG Configuration
+    # LightRAG 配置
     # ---
     lightrag_kwargs: Dict[str, Any] = field(default_factory=dict)
-    """Additional keyword arguments for LightRAG initialization when lightrag is not provided.
-    This allows passing all LightRAG configuration parameters like:
-    - kv_storage, vector_storage, graph_storage, doc_status_storage
-    - top_k, chunk_top_k, max_entity_tokens, max_relation_tokens, max_total_tokens
-    - cosine_threshold, related_chunk_number
-    - chunk_token_size, chunk_overlap_token_size, tokenizer, tiktoken_model_name
-    - embedding_batch_num, embedding_func_max_async, embedding_cache_config
-    - llm_model_name, llm_model_max_token_size, llm_model_max_async, llm_model_kwargs
-    - rerank_model_func, vector_db_storage_cls_kwargs, enable_llm_cache
-    - max_parallel_insert, max_graph_nodes, addon_params, etc.
+    """当 lightrag 未提供时 LightRAG 初始化的额外关键字参数。
+    这允许传递所有 LightRAG 配置参数，例如：
+    - kv_storage、vector_storage、graph_storage、doc_status_storage
+    - top_k、chunk_top_k、max_entity_tokens、max_relation_tokens、max_total_tokens
+    - cosine_threshold、related_chunk_number
+    - chunk_token_size、chunk_overlap_token_size、tokenizer、tiktoken_model_name
+    - embedding_batch_num、embedding_func_max_async、embedding_cache_config
+    - llm_model_name、llm_model_max_token_size、llm_model_max_async、llm_model_kwargs
+    - rerank_model_func、vector_db_storage_cls_kwargs、enable_llm_cache
+    - max_parallel_insert、max_graph_nodes、addon_params 等。
     """
 
-    # Internal State
+    # 内部状态
     # ---
     modal_processors: Dict[str, Any] = field(default_factory=dict, init=False)
-    """Dictionary of multimodal processors."""
+    """多模态处理器字典。"""
 
     context_extractor: Optional[ContextExtractor] = field(default=None, init=False)
-    """Context extractor for providing surrounding content to modal processors."""
+    """用于向模态处理器提供周围内容的上下文提取器。"""
 
     parse_cache: Optional[Any] = field(default=None, init=False)
-    """Parse result cache storage using LightRAG KV storage."""
+    """使用 LightRAG KV 存储的解析结果缓存存储。"""
 
     _parser_installation_checked: bool = field(default=False, init=False)
-    """Flag to track if parser installation has been checked."""
+    """用于跟踪是否已检查解析器安装的标志。"""
 
     def __post_init__(self):
-        """Post-initialization setup following LightRAG pattern"""
-        # Initialize configuration if not provided
+        """遵循 LightRAG 模式的初始化后设置"""
+        # 如果未提供配置，则初始化配置
         if self.config is None:
             self.config = RAGAnythingConfig()
 
-        # Set working directory
+        # 设置工作目录
         self.working_dir = self.config.working_dir
 
-        # Set up logger (use existing logger, don't configure it)
+        # 设置日志记录器（使用现有的日志记录器，不配置它）
         self.logger = logger
 
-        # Set up document parser
+        # 设置文档解析器
         self.doc_parser = (
             DoclingParser() if self.config.parser == "docling" else MineruParser()
         )
 
-        # Register close method for cleanup
+        # 注册清理方法
         atexit.register(self.close)
 
-        # Create working directory if needed
+        # 如果需要，创建工作目录
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
             self.logger.info(f"Created working directory: {self.working_dir}")
 
-        # Log configuration info
+        # 记录配置信息
         self.logger.info("RAGAnything initialized with config:")
         self.logger.info(f"  Working directory: {self.config.working_dir}")
         self.logger.info(f"  Parser: {self.config.parser}")

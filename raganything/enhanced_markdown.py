@@ -1,13 +1,13 @@
 """
-Enhanced Markdown to PDF Conversion
+增强的 Markdown 到 PDF 转换
 
-This module provides improved Markdown to PDF conversion with:
-- Better formatting and styling
-- Image support
-- Table support
-- Code syntax highlighting
-- Custom templates
-- Multiple output formats
+此模块提供改进的 Markdown 到 PDF 转换功能，包括：
+- 更好的格式化和样式
+- 图像支持
+- 表格支持
+- 代码语法高亮
+- 自定义模板
+- 多种输出格式
 """
 
 import os
@@ -33,7 +33,7 @@ except ImportError:
     WEASYPRINT_AVAILABLE = False
 
 try:
-    # Check if pandoc module exists (not used directly, just for detection)
+    # 检查 pandoc 模块是否存在（不直接使用，仅用于检测）
     import importlib.util
 
     spec = importlib.util.find_spec("pandoc")
@@ -44,9 +44,9 @@ except ImportError:
 
 @dataclass
 class MarkdownConfig:
-    """Configuration for Markdown to PDF conversion"""
+    """Markdown 到 PDF 转换的配置"""
 
-    # Styling options
+    # 样式选项
     css_file: Optional[str] = None
     template_file: Optional[str] = None
     page_size: str = "A4"
@@ -54,54 +54,54 @@ class MarkdownConfig:
     font_size: str = "12pt"
     line_height: str = "1.5"
 
-    # Content options
+    # 内容选项
     include_toc: bool = True
     syntax_highlighting: bool = True
     image_max_width: str = "100%"
     table_style: str = "border-collapse: collapse; width: 100%;"
 
-    # Output options
+    # 输出选项
     output_format: str = "pdf"  # pdf, html, docx
     output_dir: Optional[str] = None
 
-    # Advanced options
+    # 高级选项
     custom_css: Optional[str] = None
     metadata: Optional[Dict[str, str]] = None
 
 
 class EnhancedMarkdownConverter:
     """
-    Enhanced Markdown to PDF converter with multiple backends
+    增强的 Markdown 到 PDF 转换器，支持多个后端
 
-    Supports multiple conversion methods:
-    - WeasyPrint (recommended for HTML/CSS styling)
-    - Pandoc (recommended for complex documents)
-    - ReportLab (fallback, basic styling)
+    支持多种转换方法：
+    - WeasyPrint（推荐用于 HTML/CSS 样式）
+    - Pandoc（推荐用于复杂文档）
+    - ReportLab（备用，基本样式）
     """
 
     def __init__(self, config: Optional[MarkdownConfig] = None):
         """
-        Initialize the converter
+        初始化转换器
 
         Args:
-            config: Configuration for conversion
+            config: 转换配置
         """
         self.config = config or MarkdownConfig()
         self.logger = logging.getLogger(__name__)
 
-        # Check available backends
+        # 检查可用的后端
         self.available_backends = self._check_backends()
         self.logger.info(f"Available backends: {list(self.available_backends.keys())}")
 
     def _check_backends(self) -> Dict[str, bool]:
-        """Check which conversion backends are available"""
+        """检查哪些转换后端可用"""
         backends = {
             "weasyprint": WEASYPRINT_AVAILABLE,
             "pandoc": PANDOC_AVAILABLE,
             "markdown": MARKDOWN_AVAILABLE,
         }
 
-        # Check if pandoc is installed on system
+        # 检查系统是否安装了 pandoc
         try:
             subprocess.run(["pandoc", "--version"], capture_output=True, check=True)
             backends["pandoc_system"] = True
@@ -111,7 +111,7 @@ class EnhancedMarkdownConverter:
         return backends
 
     def _get_default_css(self) -> str:
-        """Get default CSS styling"""
+        """获取默认 CSS 样式"""
         return """
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -226,13 +226,13 @@ class EnhancedMarkdownConverter:
         """
 
     def _process_markdown_content(self, content: str) -> str:
-        """Process Markdown content with extensions"""
+        """使用扩展处理 Markdown 内容"""
         if not MARKDOWN_AVAILABLE:
             raise RuntimeError(
                 "Markdown library not available. Install with: pip install markdown"
             )
 
-        # Configure Markdown extensions
+        # 配置 Markdown 扩展
         extensions = [
             "markdown.extensions.tables",
             "markdown.extensions.fenced_code",
@@ -254,17 +254,17 @@ class EnhancedMarkdownConverter:
             },
         }
 
-        # Convert Markdown to HTML
+        # 将 Markdown 转换为 HTML
         md = markdown.Markdown(
             extensions=extensions, extension_configs=extension_configs
         )
 
         html_content = md.convert(content)
 
-        # Add CSS styling
+        # 添加 CSS 样式
         css = self.config.custom_css or self._get_default_css()
 
-        # Create complete HTML document
+        # 创建完整的 HTML 文档
         html_doc = f"""
         <!DOCTYPE html>
         <html>
@@ -284,17 +284,17 @@ class EnhancedMarkdownConverter:
         return html_doc
 
     def convert_with_weasyprint(self, markdown_content: str, output_path: str) -> bool:
-        """Convert using WeasyPrint (best for styling)"""
+        """使用 WeasyPrint 进行转换（最适合样式化）"""
         if not WEASYPRINT_AVAILABLE:
             raise RuntimeError(
                 "WeasyPrint not available. Install with: pip install weasyprint"
             )
 
         try:
-            # Process Markdown to HTML
+            # 将 Markdown 处理为 HTML
             html_content = self._process_markdown_content(markdown_content)
 
-            # Convert HTML to PDF
+            # 将 HTML 转换为 PDF
             html = HTML(string=html_content)
             html.write_pdf(output_path)
 
@@ -310,7 +310,7 @@ class EnhancedMarkdownConverter:
     def convert_with_pandoc(
         self, markdown_content: str, output_path: str, use_system_pandoc: bool = False
     ) -> bool:
-        """Convert using Pandoc (best for complex documents)"""
+        """使用 Pandoc 进行转换（最适合复杂文档）"""
         if (
             not self.available_backends.get("pandoc_system", False)
             and not use_system_pandoc
@@ -323,14 +323,14 @@ class EnhancedMarkdownConverter:
         try:
             import subprocess
 
-            # Create temporary markdown file
+            # 创建临时 markdown 文件
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".md", delete=False
             ) as temp_file:
                 temp_file.write(markdown_content)
                 temp_md_path = temp_file.name
 
-            # Build pandoc command with wkhtmltopdf engine
+            # 使用 wkhtmltopdf 引擎构建 pandoc 命令
             cmd = [
                 "pandoc",
                 temp_md_path,
@@ -342,7 +342,7 @@ class EnhancedMarkdownConverter:
                 "--number-sections",
             ]
 
-            # Run pandoc
+            # 运行 pandoc
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
 
             if result.returncode == 0:
@@ -371,15 +371,15 @@ class EnhancedMarkdownConverter:
         self, markdown_content: str, output_path: str, method: str = "auto"
     ) -> bool:
         """
-        Convert markdown content to PDF
+        将 markdown 内容转换为 PDF
 
         Args:
-            markdown_content: Markdown content to convert
-            output_path: Output PDF file path
-            method: Conversion method ("auto", "weasyprint", "pandoc", "pandoc_system")
+            markdown_content: 要转换的 Markdown 内容
+            output_path: 输出 PDF 文件路径
+            method: 转换方法（"auto"、"weasyprint"、"pandoc"、"pandoc_system"）
 
         Returns:
-            True if conversion successful, False otherwise
+            如果转换成功则返回 True，否则返回 False
         """
         if method == "auto":
             method = self._get_recommended_backend()
@@ -404,27 +404,27 @@ class EnhancedMarkdownConverter:
         self, input_path: str, output_path: Optional[str] = None, method: str = "auto"
     ) -> bool:
         """
-        Convert Markdown file to PDF
+        将 Markdown 文件转换为 PDF
 
         Args:
-            input_path: Input Markdown file path
-            output_path: Output PDF file path (optional)
-            method: Conversion method
+            input_path: 输入的 Markdown 文件路径
+            output_path: 输出 PDF 文件路径（可选）
+            method: 转换方法
 
         Returns:
-            bool: True if conversion successful
+            bool: 如果转换成功则返回 True
         """
         input_path_obj = Path(input_path)
 
         if not input_path_obj.exists():
             raise FileNotFoundError(f"Input file not found: {input_path}")
 
-        # Read markdown content
+        # 读取 markdown 内容
         try:
             with open(input_path_obj, "r", encoding="utf-8") as f:
                 markdown_content = f.read()
         except UnicodeDecodeError:
-            # Try with different encodings
+            # 尝试使用不同的编码
             for encoding in ["gbk", "latin-1", "cp1252"]:
                 try:
                     with open(input_path_obj, "r", encoding=encoding) as f:
@@ -437,14 +437,14 @@ class EnhancedMarkdownConverter:
                     f"Could not decode file {input_path} with any supported encoding"
                 )
 
-        # Determine output path
+        # 确定输出路径
         if output_path is None:
             output_path = str(input_path_obj.with_suffix(".pdf"))
 
         return self.convert_markdown_to_pdf(markdown_content, output_path, method)
 
     def get_backend_info(self) -> Dict[str, Any]:
-        """Get information about available backends"""
+        """获取可用后端的信息"""
         return {
             "available_backends": self.available_backends,
             "recommended_backend": self._get_recommended_backend(),
@@ -458,7 +458,7 @@ class EnhancedMarkdownConverter:
         }
 
     def _get_recommended_backend(self) -> str:
-        """Get recommended backend based on availability"""
+        """根据可用性获取推荐的后端"""
         if self.available_backends.get("pandoc_system", False):
             return "pandoc"
         elif self.available_backends.get("weasyprint", False):
@@ -468,7 +468,7 @@ class EnhancedMarkdownConverter:
 
 
 def main():
-    """Command-line interface for enhanced markdown conversion"""
+    """增强 markdown 转换的命令行接口"""
     import argparse
 
     parser = argparse.ArgumentParser(description="Enhanced Markdown to PDF conversion")

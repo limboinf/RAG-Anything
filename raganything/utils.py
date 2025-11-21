@@ -1,7 +1,7 @@
 """
-Utility functions for RAGAnything
+RAGAnything 实用工具函数
 
-Contains helper functions for content separation, text insertion, and other utilities
+包含用于内容分离、文本插入和其他实用工具的辅助函数
 """
 
 import base64
@@ -14,13 +14,13 @@ def separate_content(
     content_list: List[Dict[str, Any]],
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
-    Separate text content and multimodal content
+    分离文本内容和多模态内容
 
     Args:
-        content_list: Content list from MinerU parsing
+        content_list: 来自 MinerU 解析的内容列表
 
     Returns:
-        (text_content, multimodal_items): Pure text content and multimodal items list
+        (text_content, multimodal_items): 纯文本内容和多模态项目列表
     """
     text_parts = []
     multimodal_items = []
@@ -29,22 +29,22 @@ def separate_content(
         content_type = item.get("type", "text")
 
         if content_type == "text":
-            # Text content
+            # 文本内容
             text = item.get("text", "")
             if text.strip():
                 text_parts.append(text)
         else:
-            # Multimodal content (image, table, equation, etc.)
+            # 多模态内容（图像、表格、公式等）
             multimodal_items.append(item)
 
-    # Merge all text content
+    # 合并所有文本内容
     text_content = "\n\n".join(text_parts)
 
     logger.info("Content separation complete:")
     logger.info(f"  - Text content length: {len(text_content)} characters")
     logger.info(f"  - Multimodal items count: {len(multimodal_items)}")
 
-    # Count multimodal types
+    # 统计多模态类型
     modal_types = {}
     for item in multimodal_items:
         modal_type = item.get("type", "unknown")
@@ -58,13 +58,13 @@ def separate_content(
 
 def encode_image_to_base64(image_path: str) -> str:
     """
-    Encode image file to base64 string
+    将图像文件编码为 base64 字符串
 
     Args:
-        image_path: Path to the image file
+        image_path: 图像文件的路径
 
     Returns:
-        str: Base64 encoded string, empty string if encoding fails
+        str: Base64 编码的字符串，如果编码失败则返回空字符串
     """
     try:
         with open(image_path, "rb") as image_file:
@@ -77,14 +77,14 @@ def encode_image_to_base64(image_path: str) -> str:
 
 def validate_image_file(image_path: str, max_size_mb: int = 50) -> bool:
     """
-    Validate if a file is a valid image file
+    验证文件是否为有效的图像文件
 
     Args:
-        image_path: Path to the image file
-        max_size_mb: Maximum file size in MB
+        image_path: 图像文件的路径
+        max_size_mb: 最大文件大小（MB）
 
     Returns:
-        bool: True if valid, False otherwise
+        bool: 如果有效则返回 True，否则返回 False
     """
     try:
         path = Path(image_path)
@@ -93,12 +93,12 @@ def validate_image_file(image_path: str, max_size_mb: int = 50) -> bool:
         logger.debug(f"Resolved path object: {path}")
         logger.debug(f"Path exists check: {path.exists()}")
 
-        # Check if file exists
+        # 检查文件是否存在
         if not path.exists():
             logger.warning(f"Image file not found: {image_path}")
             return False
 
-        # Check file extension
+        # 检查文件扩展名
         image_extensions = [
             ".jpg",
             ".jpeg",
@@ -120,7 +120,7 @@ def validate_image_file(image_path: str, max_size_mb: int = 50) -> bool:
             logger.warning(f"File does not appear to be an image: {image_path}")
             return False
 
-        # Check file size
+        # 检查文件大小
         file_size = path.stat().st_size
         max_size = max_size_mb * 1024 * 1024
         logger.debug(
@@ -148,21 +148,21 @@ async def insert_text_content(
     file_paths: str | list[str] | None = None,
 ):
     """
-    Insert pure text content into LightRAG
+    将纯文本内容插入 LightRAG
 
     Args:
-        lightrag: LightRAG instance
-        input: Single document string or list of document strings
-        split_by_character: if split_by_character is not None, split the string by character, if chunk longer than
-        chunk_token_size, it will be split again by token size.
-        split_by_character_only: if split_by_character_only is True, split the string by character only, when
-        split_by_character is None, this parameter is ignored.
-        ids: single string of the document ID or list of unique document IDs, if not provided, MD5 hash IDs will be generated
-        file_paths: single string of the file path or list of file paths, used for citation
+        lightrag: LightRAG 实例
+        input: 单个文档字符串或文档字符串列表
+        split_by_character: 如果 split_by_character 不为 None，按字符分割字符串，如果块长度超过
+        chunk_token_size，将再次按 token 大小分割。
+        split_by_character_only: 如果 split_by_character_only 为 True，仅按字符分割字符串，当
+        split_by_character 为 None 时，此参数被忽略。
+        ids: 文档 ID 的单个字符串或唯一文档 ID 列表，如果未提供，将生成 MD5 哈希 ID
+        file_paths: 文件路径的单个字符串或文件路径列表，用于引用
     """
     logger.info("Starting text content insertion into LightRAG...")
 
-    # Use LightRAG's insert method with all parameters
+    # 使用所有参数调用 LightRAG 的插入方法
     await lightrag.ainsert(
         input=input,
         file_paths=file_paths,
@@ -185,19 +185,19 @@ async def insert_text_content_with_multimodal_content(
     scheme_name: str | None = None,
 ):
     """
-    Insert pure text content into LightRAG
+    将纯文本内容插入 LightRAG
 
     Args:
-        lightrag: LightRAG instance
-        input: Single document string or list of document strings
-        multimodal_content: Multimodal content list (optional)
-        split_by_character: if split_by_character is not None, split the string by character, if chunk longer than
-        chunk_token_size, it will be split again by token size.
-        split_by_character_only: if split_by_character_only is True, split the string by character only, when
-        split_by_character is None, this parameter is ignored.
-        ids: single string of the document ID or list of unique document IDs, if not provided, MD5 hash IDs will be generated
-        file_paths: single string of the file path or list of file paths, used for citation
-        scheme_name: scheme name (optional)
+        lightrag: LightRAG 实例
+        input: 单个文档字符串或文档字符串列表
+        multimodal_content: 多模态内容列表（可选）
+        split_by_character: 如果 split_by_character 不为 None，按字符分割字符串，如果块长度超过
+        chunk_token_size，将再次按 token 大小分割。
+        split_by_character_only: 如果 split_by_character_only 为 True，仅按字符分割字符串，当
+        split_by_character 为 None 时，此参数被忽略。
+        ids: 文档 ID 的单个字符串或唯一文档 ID 列表，如果未提供，将生成 MD5 哈希 ID
+        file_paths: 文件路径的单个字符串或文件路径列表，用于引用
+        scheme_name: 方案名称（可选）
     """
     logger.info("Starting text content insertion into LightRAG...")
 
@@ -223,16 +223,16 @@ async def insert_text_content_with_multimodal_content(
 
 def get_processor_for_type(modal_processors: Dict[str, Any], content_type: str):
     """
-    Get appropriate processor based on content type
+    根据内容类型获取适当的处理器
 
     Args:
-        modal_processors: Dictionary of available processors
-        content_type: Content type
+        modal_processors: 可用处理器字典
+        content_type: 内容类型
 
     Returns:
-        Corresponding processor instance
+        对应的处理器实例
     """
-    # Direct mapping to corresponding processor
+    # 直接映射到相应的处理器
     if content_type == "image":
         return modal_processors.get("image")
     elif content_type == "table":
@@ -240,35 +240,35 @@ def get_processor_for_type(modal_processors: Dict[str, Any], content_type: str):
     elif content_type == "equation":
         return modal_processors.get("equation")
     else:
-        # For other types, use generic processor
+        # 对于其他类型，使用通用处理器
         return modal_processors.get("generic")
 
 
 def get_processor_supports(proc_type: str) -> List[str]:
-    """Get processor supported features"""
+    """获取处理器支持的功能"""
     supports_map = {
         "image": [
-            "Image content analysis",
-            "Visual understanding",
-            "Image description generation",
-            "Image entity extraction",
+            "图像内容分析",
+            "视觉理解",
+            "图像描述生成",
+            "图像实体提取",
         ],
         "table": [
-            "Table structure analysis",
-            "Data statistics",
-            "Trend identification",
-            "Table entity extraction",
+            "表格结构分析",
+            "数据统计",
+            "趋势识别",
+            "表格实体提取",
         ],
         "equation": [
-            "Mathematical formula parsing",
-            "Variable identification",
-            "Formula meaning explanation",
-            "Formula entity extraction",
+            "数学公式解析",
+            "变量识别",
+            "公式含义解释",
+            "公式实体提取",
         ],
         "generic": [
-            "General content analysis",
-            "Structured processing",
-            "Entity extraction",
+            "通用内容分析",
+            "结构化处理",
+            "实体提取",
         ],
     }
-    return supports_map.get(proc_type, ["Basic processing"])
+    return supports_map.get(proc_type, ["基本处理"])
