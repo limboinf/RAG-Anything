@@ -353,68 +353,68 @@ class QueryMixin:
         self, base_query: str, multimodal_content: List[Dict[str, Any]]
     ) -> str:
         """
-        Process multimodal query content to generate enhanced query text
+        处理多模态查询内容以生成增强查询文本
 
         Args:
-            base_query: Base query text
-            multimodal_content: List of multimodal content
+            base_query: 基础查询文本
+            multimodal_content: 多模态内容列表
 
         Returns:
-            str: Enhanced query text
+            str: 增强查询文本
         """
-        self.logger.info("Starting multimodal query content processing...")
+        self.logger.info("开始处理多模态查询内容...")
 
-        enhanced_parts = [f"User query: {base_query}"]
+        enhanced_parts = [f"用户查询: {base_query}"]
 
         for i, content in enumerate(multimodal_content):
             content_type = content.get("type", "unknown")
             self.logger.info(
-                f"Processing {i+1}/{len(multimodal_content)} multimodal content: {content_type}"
+                f"正在处理第 {i+1}/{len(multimodal_content)} 个多模态内容: {content_type}"
             )
 
             try:
-                # Get appropriate processor
+                # 获取适当的处理器
                 processor = get_processor_for_type(self.modal_processors, content_type)
 
                 if processor:
-                    # Generate content description
+                    # 生成内容描述
                     description = await self._generate_query_content_description(
                         processor, content, content_type
                     )
                     enhanced_parts.append(
-                        f"\nRelated {content_type} content: {description}"
+                        f"\n相关的 {content_type} 内容: {description}"
                     )
                 else:
-                    # If no appropriate processor, use basic description
+                    # 如果没有适当的处理器,使用基本描述
                     basic_desc = str(content)[:200]
                     enhanced_parts.append(
-                        f"\nRelated {content_type} content: {basic_desc}"
+                        f"\n相关的 {content_type} 内容: {basic_desc}"
                     )
 
             except Exception as e:
-                self.logger.error(f"Error processing multimodal content: {str(e)}")
-                # Continue processing other content
+                self.logger.error(f"处理多模态内容时出错: {str(e)}")
+                # 继续处理其他内容
                 continue
 
         enhanced_query = "\n".join(enhanced_parts)
         enhanced_query += PROMPTS["QUERY_ENHANCEMENT_SUFFIX"]
 
-        self.logger.info("Multimodal query content processing completed")
+        self.logger.info("多模态查询内容处理完成")
         return enhanced_query
 
     async def _generate_query_content_description(
         self, processor, content: Dict[str, Any], content_type: str
     ) -> str:
         """
-        Generate content description for query
+        为查询生成内容描述
 
         Args:
-            processor: Multimodal processor
-            content: Content data
-            content_type: Content type
+            processor: 多模态处理器
+            content: 内容数据
+            content_type: 内容类型
 
         Returns:
-            str: Content description
+            str: 内容描述
         """
         try:
             if content_type == "image":
@@ -435,13 +435,13 @@ class QueryMixin:
     async def _describe_image_for_query(
         self, processor, content: Dict[str, Any]
     ) -> str:
-        """Generate image description for query"""
+        """为查询生成图像描述"""
         image_path = content.get("img_path")
         captions = content.get("image_caption", content.get("img_caption", []))
         footnotes = content.get("image_footnote", content.get("img_footnote", []))
 
         if image_path and Path(image_path).exists():
-            # If image exists, use vision model to generate description
+            # 如果图像存在,使用视觉模型生成描述
             image_base64 = processor._encode_image_to_base64(image_path)
             if image_base64:
                 prompt = PROMPTS["QUERY_IMAGE_DESCRIPTION"]
@@ -452,21 +452,21 @@ class QueryMixin:
                 )
                 return description
 
-        # If image doesn't exist or processing failed, use existing information
+        # 如果图像不存在或处理失败,使用现有信息
         parts = []
         if image_path:
-            parts.append(f"Image path: {image_path}")
+            parts.append(f"图像路径: {image_path}")
         if captions:
-            parts.append(f"Image captions: {', '.join(captions)}")
+            parts.append(f"图像标题: {', '.join(captions)}")
         if footnotes:
-            parts.append(f"Image footnotes: {', '.join(footnotes)}")
+            parts.append(f"图像注释: {', '.join(footnotes)}")
 
-        return "; ".join(parts) if parts else "Image content information incomplete"
+        return "; ".join(parts) if parts else "图像内容信息不完整"
 
     async def _describe_table_for_query(
         self, processor, content: Dict[str, Any]
     ) -> str:
-        """Generate table description for query"""
+        """为查询生成表格描述"""
         table_data = content.get("table_data", "")
         table_caption = content.get("table_caption", "")
 
@@ -483,7 +483,7 @@ class QueryMixin:
     async def _describe_equation_for_query(
         self, processor, content: Dict[str, Any]
     ) -> str:
-        """Generate equation description for query"""
+        """为查询生成公式描述"""
         latex = content.get("latex", "")
         equation_caption = content.get("equation_caption", "")
 
@@ -500,7 +500,7 @@ class QueryMixin:
     async def _describe_generic_for_query(
         self, processor, content: Dict[str, Any], content_type: str
     ) -> str:
-        """Generate generic content description for query"""
+        """为查询生成通用内容描述"""
         content_str = str(content)
 
         prompt = PROMPTS["QUERY_GENERIC_ANALYSIS"].format(
@@ -518,74 +518,74 @@ class QueryMixin:
 
     async def _process_image_paths_for_vlm(self, prompt: str) -> tuple[str, int]:
         """
-        Process image paths in prompt, keeping original paths and adding VLM markers
+        处理提示中的图像路径,保留原始路径并添加 VLM 标记
 
         Args:
-            prompt: Original prompt
+            prompt: 原始提示
 
         Returns:
-            tuple: (processed prompt, image count)
+            tuple: (处理后的提示, 图像数量)
         """
         enhanced_prompt = prompt
         images_processed = 0
 
-        # Initialize image cache
+        # 初始化图像缓存
         self._current_images_base64 = []
 
-        # Enhanced regex pattern for matching image paths
-        # Matches only the path ending with image file extensions
+        # 用于匹配图像路径的增强正则表达式模式
+        # 仅匹配以图像文件扩展名结尾的路径
         image_path_pattern = (
             r"Image Path:\s*([^\r\n]*?\.(?:jpg|jpeg|png|gif|bmp|webp|tiff|tif))"
         )
 
-        # First, let's see what matches we find
+        # 首先,让我们看看找到了什么匹配项
         matches = re.findall(image_path_pattern, prompt)
-        self.logger.info(f"Found {len(matches)} image path matches in prompt")
+        self.logger.info(f"在提示中找到 {len(matches)} 个图像路径匹配项")
 
         def replace_image_path(match):
             nonlocal images_processed
 
             image_path = match.group(1).strip()
-            self.logger.debug(f"Processing image path: '{image_path}'")
+            self.logger.debug(f"正在处理图像路径: '{image_path}'")
 
-            # Validate path format (basic check)
+            # 验证路径格式(基本检查)
             if not image_path or len(image_path) < 3:
-                self.logger.warning(f"Invalid image path format: {image_path}")
-                return match.group(0)  # Keep original
+                self.logger.warning(f"无效的图像路径格式: {image_path}")
+                return match.group(0)  # 保留原始内容
 
-            # Use utility function to validate image file
-            self.logger.debug(f"Calling validate_image_file for: {image_path}")
+            # 使用工具函数验证图像文件
+            self.logger.debug(f"正在调用 validate_image_file 验证: {image_path}")
             is_valid = validate_image_file(image_path)
-            self.logger.debug(f"Validation result for {image_path}: {is_valid}")
+            self.logger.debug(f"{image_path} 的验证结果: {is_valid}")
 
             if not is_valid:
-                self.logger.warning(f"Image validation failed for: {image_path}")
-                return match.group(0)  # Keep original if validation fails
+                self.logger.warning(f"图像验证失败: {image_path}")
+                return match.group(0)  # 如果验证失败,保留原始内容
 
             try:
-                # Encode image to base64 using utility function
-                self.logger.debug(f"Attempting to encode image: {image_path}")
+                # 使用工具函数将图像编码为 base64
+                self.logger.debug(f"尝试编码图像: {image_path}")
                 image_base64 = encode_image_to_base64(image_path)
                 if image_base64:
                     images_processed += 1
-                    # Save base64 to instance variable for later use
+                    # 将 base64 保存到实例变量以供后续使用
                     self._current_images_base64.append(image_base64)
 
-                    # Keep original path info and add VLM marker
+                    # 保留原始路径信息并添加 VLM 标记
                     result = f"Image Path: {image_path}\n[VLM_IMAGE_{images_processed}]"
                     self.logger.debug(
-                        f"Successfully processed image {images_processed}: {image_path}"
+                        f"成功处理图像 {images_processed}: {image_path}"
                     )
                     return result
                 else:
-                    self.logger.error(f"Failed to encode image: {image_path}")
-                    return match.group(0)  # Keep original if encoding failed
+                    self.logger.error(f"图像编码失败: {image_path}")
+                    return match.group(0)  # 如果编码失败,保留原始内容
 
             except Exception as e:
-                self.logger.error(f"Failed to process image {image_path}: {e}")
-                return match.group(0)  # Keep original
+                self.logger.error(f"处理图像 {image_path} 失败: {e}")
+                return match.group(0)  # 保留原始内容
 
-        # Execute replacement
+        # 执行替换
         enhanced_prompt = re.sub(
             image_path_pattern, replace_image_path, enhanced_prompt
         )
@@ -596,47 +596,47 @@ class QueryMixin:
         self, enhanced_prompt: str, user_query: str
     ) -> List[Dict]:
         """
-        Build VLM message format, using markers to correspond images with text positions
+        构建 VLM 消息格式,使用标记将图像与文本位置对应
 
         Args:
-            enhanced_prompt: Enhanced prompt with image markers
-            user_query: User query
+            enhanced_prompt: 带有图像标记的增强提示
+            user_query: 用户查询
 
         Returns:
-            List[Dict]: VLM message format
+            List[Dict]: VLM 消息格式
         """
         images_base64 = getattr(self, "_current_images_base64", [])
 
         if not images_base64:
-            # Pure text mode
+            # 纯文本模式
             return [
                 {
                     "role": "user",
-                    "content": f"Context:\n{enhanced_prompt}\n\nUser Question: {user_query}",
+                    "content": f"上下文:\n{enhanced_prompt}\n\n用户问题: {user_query}",
                 }
             ]
 
-        # Build multimodal content
+        # 构建多模态内容
         content_parts = []
 
-        # Split text at image markers and insert images
+        # 在图像标记处分割文本并插入图像
         text_parts = enhanced_prompt.split("[VLM_IMAGE_")
 
         for i, text_part in enumerate(text_parts):
             if i == 0:
-                # First text part
+                # 第一个文本部分
                 if text_part.strip():
                     content_parts.append({"type": "text", "text": text_part})
             else:
-                # Find marker number and insert corresponding image
+                # 查找标记编号并插入对应的图像
                 marker_match = re.match(r"(\d+)\](.*)", text_part, re.DOTALL)
                 if marker_match:
                     image_num = (
                         int(marker_match.group(1)) - 1
-                    )  # Convert to 0-based index
+                    )  # 转换为从 0 开始的索引
                     remaining_text = marker_match.group(2)
 
-                    # Insert corresponding image
+                    # 插入对应的图像
                     if 0 <= image_num < len(images_base64):
                         content_parts.append(
                             {
@@ -647,35 +647,35 @@ class QueryMixin:
                             }
                         )
 
-                    # Insert remaining text
+                    # 插入剩余文本
                     if remaining_text.strip():
                         content_parts.append({"type": "text", "text": remaining_text})
 
-        # Add user question
+        # 添加用户问题
         content_parts.append(
             {
                 "type": "text",
-                "text": f"\n\nUser Question: {user_query}\n\nPlease answer based on the context and images provided.",
+                "text": f"\n\n用户问题: {user_query}\n\n请根据提供的上下文和图像进行回答。",
             }
         )
 
         return [
             {
                 "role": "system",
-                "content": "You are a helpful assistant that can analyze both text and image content to provide comprehensive answers.",
+                "content": "你是一个有帮助的助手,可以分析文本和图像内容以提供全面的答案。",
             },
             {"role": "user", "content": content_parts},
         ]
 
     async def _call_vlm_with_multimodal_content(self, messages: List[Dict]) -> str:
         """
-        Call VLM to process multimodal content
+        调用 VLM 处理多模态内容
 
         Args:
-            messages: VLM message format
+            messages: VLM 消息格式
 
         Returns:
-            str: VLM response result
+            str: VLM 响应结果
         """
         try:
             user_message = messages[1]
@@ -683,38 +683,38 @@ class QueryMixin:
             system_prompt = messages[0]["content"]
 
             if isinstance(content, str):
-                # Pure text mode
+                # 纯文本模式
                 result = await self.vision_model_func(
                     content, system_prompt=system_prompt
                 )
             else:
-                # Multimodal mode - pass complete messages directly to VLM
+                # 多模态模式 - 直接将完整消息传递给 VLM
                 result = await self.vision_model_func(
-                    "",  # Empty prompt since we're using messages format
+                    "",  # 空提示,因为我们使用的是消息格式
                     messages=messages,
                 )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"VLM call failed: {e}")
+            self.logger.error(f"VLM 调用失败: {e}")
             raise
 
-    # Synchronous versions of query methods
+    # 同步版本的查询方法
     def query(self, query: str, mode: str = "mix", **kwargs) -> str:
         """
-        Synchronous version of pure text query
+        纯文本查询的同步版本
 
         Args:
-            query: Query text
-            mode: Query mode ("local", "global", "hybrid", "naive", "mix", "bypass")
-            **kwargs: Other query parameters, will be passed to QueryParam
-                - vlm_enhanced: bool, default True when vision_model_func is available.
-                  If True, will parse image paths in retrieved context and replace them
-                  with base64 encoded images for VLM processing.
+            query: 查询文本
+            mode: 查询模式（"local"、"global"、"hybrid"、"naive"、"mix"、"bypass"）
+            **kwargs: 其他查询参数,将传递给 QueryParam
+                - vlm_enhanced: bool,当 vision_model_func 可用时默认为 True。
+                  如果为 True,将解析检索上下文中的图像路径并将其替换为
+                  base64 编码的图像以供 VLM 处理。
 
         Returns:
-            str: Query result
+            str: 查询结果
         """
         loop = always_get_an_event_loop()
         return loop.run_until_complete(self.aquery(query, mode=mode, **kwargs))
@@ -727,18 +727,18 @@ class QueryMixin:
         **kwargs,
     ) -> str:
         """
-        Synchronous version of multimodal query
+        多模态查询的同步版本
 
         Args:
-            query: Base query text
-            multimodal_content: List of multimodal content, each element contains:
-                - type: Content type ("image", "table", "equation", etc.)
-                - Other fields depend on type (e.g., img_path, table_data, latex, etc.)
-            mode: Query mode ("local", "global", "hybrid", "naive", "mix", "bypass")
-            **kwargs: Other query parameters, will be passed to QueryParam
+            query: 基础查询文本
+            multimodal_content: 多模态内容列表,每个元素包含:
+                - type: 内容类型（"image"、"table"、"equation" 等）
+                - 其他字段取决于类型（例如 img_path、table_data、latex 等）
+            mode: 查询模式（"local"、"global"、"hybrid"、"naive"、"mix"、"bypass"）
+            **kwargs: 其他查询参数,将传递给 QueryParam
 
         Returns:
-            str: Query result
+            str: 查询结果
         """
         loop = always_get_an_event_loop()
         return loop.run_until_complete(
