@@ -110,7 +110,7 @@ async def process_with_rag(
             working_dir=working_dir or "./rag_storage",
             parser=parser,  # 解析器选择：mineru 或 docling
             parse_method="auto",  # 解析方法：auto、ocr 或 txt
-            enable_image_processing=True,
+            enable_image_processing=False,
             enable_table_processing=True,
             enable_equation_processing=True,
         )
@@ -211,56 +211,56 @@ async def process_with_rag(
         )
 
         # 示例查询 - 演示不同的查询方法
-        logger.info("\nQuerying processed document:")
+        logger.info("\n开始查询处理后的文档:")
 
         # 1. 使用 aquery() 进行纯文本查询
         text_queries = [
-            "What is the main content of the document?",
-            "What are the key topics discussed?",
+            "文档的主要内容是什么？",
+            "文档中讨论了哪些关键主题？",
         ]
 
         for query in text_queries:
-            logger.info(f"\n[Text Query]: {query}")
+            logger.info(f"\n[文本查询]: {query}")
             result = await rag.aquery(query, mode="hybrid")
-            logger.info(f"Answer: {result}")
+            logger.info(f"回答: {result}")
 
         # 2. 使用 aquery_with_multimodal() 进行包含特定多模态内容的查询
-        logger.info(
-            "\n[Multimodal Query]: Analyzing performance data in context of document"
-        )
-        multimodal_result = await rag.aquery_with_multimodal(
-            "Compare this performance data with any similar results mentioned in the document",
-            multimodal_content=[
-                {
-                    "type": "table",
-                    "table_data": """Method,Accuracy,Processing_Time
-                                RAGAnything,95.2%,120ms
-                                Traditional_RAG,87.3%,180ms
-                                Baseline,82.1%,200ms""",
-                    "table_caption": "Performance comparison results",
-                }
-            ],
-            mode="hybrid",
-        )
-        logger.info(f"Answer: {multimodal_result}")
+        # logger.info(
+        #     "\n[多模态查询]: 在文档上下文中分析性能数据"
+        # )
+        # multimodal_result = await rag.aquery_with_multimodal(
+        #     "将此性能数据与文档中提到的任何类似结果进行比较",
+        #     multimodal_content=[
+        #         {
+        #             "type": "table",
+        #             "table_data": """Method,Accuracy,Processing_Time
+        #                         RAGAnything,95.2%,120ms
+        #                         Traditional_RAG,87.3%,180ms
+        #                         Baseline,82.1%,200ms""",
+        #             "table_caption": "Performance comparison results",
+        #         }
+        #     ],
+        #     mode="hybrid",
+        # )
+        # logger.info(f"多模态查询回答: {multimodal_result}")
 
-        # 3. 另一个包含公式内容的多模态查询
-        logger.info("\n[Multimodal Query]: Mathematical formula analysis")
-        equation_result = await rag.aquery_with_multimodal(
-            "Explain this formula and relate it to any mathematical concepts in the document",
-            multimodal_content=[
-                {
-                    "type": "equation",
-                    "latex": "F1 = 2 \\cdot \\frac{precision \\cdot recall}{precision + recall}",
-                    "equation_caption": "F1-score calculation formula",
-                }
-            ],
-            mode="hybrid",
-        )
-        logger.info(f"Answer: {equation_result}")
+        # # 3. 另一个包含公式内容的多模态查询
+        # logger.info("\n[多模态查询]: 数学公式分析")
+        # equation_result = await rag.aquery_with_multimodal(
+        #     "解释这个公式并将其与文档中的任何数学概念联系起来",
+        #     multimodal_content=[
+        #         {
+        #             "type": "equation",
+        #             "latex": "F1 = 2 \\cdot \\frac{precision \\cdot recall}{precision + recall}",
+        #             "equation_caption": "F1-score calculation formula",
+        #         }
+        #     ],
+        #     mode="hybrid",
+        # )
+        # logger.info(f"公式分析回答: {equation_result}")
 
     except Exception as e:
-        logger.error(f"Error processing with RAG: {str(e)}")
+        logger.error(f"处理 RAG 时出错: {str(e)}")
         import traceback
 
         logger.error(traceback.format_exc())
@@ -268,36 +268,42 @@ async def process_with_rag(
 
 def main():
     """运行示例的主函数"""
-    parser = argparse.ArgumentParser(description="MinerU RAG Example")
-    parser.add_argument("file_path", help="Path to the document to process")
+    parser = argparse.ArgumentParser(description="MinerU RAG 示例")
+    parser.add_argument("file_path", help="需要处理的文档路径")
     parser.add_argument(
-        "--working_dir", "-w", default="./rag_storage", help="Working directory path"
+        "--working_dir",
+        "-w",
+        default="./rag_storage",
+        help="RAG 存储工作目录（默认 ./rag_storage）",
     )
     parser.add_argument(
-        "--output", "-o", default="./output", help="Output directory path"
+        "--output",
+        "-o",
+        default="./output",
+        help="结果输出目录（默认 ./output）",
     )
     parser.add_argument(
         "--api-key",
         default=os.getenv("LLM_BINDING_API_KEY"),
-        help="OpenAI API key (defaults to LLM_BINDING_API_KEY env var)",
+        help="OpenAI API Key，默认读取 LLM_BINDING_API_KEY 环境变量",
     )
     parser.add_argument(
         "--base-url",
         default=os.getenv("LLM_BINDING_HOST"),
-        help="Optional base URL for API",
+        help="可选的 API 基础 URL（默认读取 LLM_BINDING_HOST）",
     )
     parser.add_argument(
         "--parser",
         default=os.getenv("PARSER", "mineru"),
-        help="Optional base URL for API",
+        help="解析器名称（默认使用 PARSER 环境变量，缺省为 mineru）",
     )
 
     args = parser.parse_args()
 
     # 检查是否提供了 API 密钥
     if not args.api_key:
-        logger.error("Error: OpenAI API key is required")
-        logger.error("Set api key environment variable or use --api-key option")
+        logger.error("错误：需要提供 OpenAI API Key")
+        logger.error("请设置对应环境变量或通过 --api-key 选项传入")
         return
 
     # 如果指定，创建输出目录
@@ -321,9 +327,9 @@ if __name__ == "__main__":
     # 首先配置日志
     configure_logging()
 
-    print("RAGAnything Example")
+    print("RAGAnything 示例")
     print("=" * 30)
-    print("Processing document with multimodal RAG pipeline")
+    print("使用多模态 RAG 流水线处理文档")
     print("=" * 30)
 
     main()

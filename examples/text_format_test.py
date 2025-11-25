@@ -71,7 +71,7 @@ async def test_text_format_parsing(file_path: str):
 
     try:
         # 使用 MinerU 测试文本解析
-        print("\n🔄 Testing text parsing with MinerU...")
+        print("\n🔄 使用 MinerU 解析文本...")
         content_list, md_content = await rag.parse_document(
             file_path=str(file_path),
             output_dir="./test_output",
@@ -79,7 +79,7 @@ async def test_text_format_parsing(file_path: str):
             display_stats=True,
         )
 
-        print("✅ Parsing successful!")
+        print("✅  解析成功!")
         print(f"   📊 Content blocks: {len(content_list)}")
         print(f"   📝 Markdown length: {len(md_content)} characters")
 
